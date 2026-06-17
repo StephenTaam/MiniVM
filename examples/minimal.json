@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "entry": "main",
+  "root": {
+    "type": "function",
+    "cbname": "main",
+    "constants": [
+      { "type": "int", "value": 1 },
+      { "type": "int", "value": 2 }
+    ],
+    "names": ["a", "b", "c"],
+    "blocks": [],
+    "instructions": [
+      { "op": "LOAD_CONST", "arg": 0 },
+      { "op": "STORE_NAME", "arg": 0 },
+      { "op": "LOAD_CONST", "arg": 1 },
+      { "op": "STORE_NAME", "arg": 1 },
+      { "op": "LOAD_NAME", "arg": 0 },
+      { "op": "LOAD_NAME", "arg": 1 },
+      { "op": "BINARY_OP", "arg": 1 },
+      { "op": "STORE_NAME", "arg": 2 },
+      { "op": "LOAD_NAME", "arg": 2 },
+      { "op": "RHINO_ECHO", "arg": 0 },
+      { "op": "RETURN_VALUE", "arg": 0 }
+    ],
+    "exceptiontable": [],
+    "instlnums": [],
+    "baseline": 0,
+    "currline": -1
+  }
+}

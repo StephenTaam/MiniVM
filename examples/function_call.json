@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "entry": "root",
+  "root": {
+    "type": "normal",
+    "cbname": "root",
+    "constants": [
+      { "type": "int", "value": 1 },
+      { "type": "int", "value": 2 }
+    ],
+    "names": ["add"],
+    "blocks": [
+      {
+        "type": "function",
+        "cbname": "add",
+        "argnames": ["a", "b"],
+        "defaults": [],
+        "flags": [],
+        "constants": [],
+        "names": [],
+        "blocks": [],
+        "instructions": [
+          { "op": "LOAD_ARG", "arg": 0 },
+          { "op": "LOAD_ARG", "arg": 1 },
+          { "op": "BINARY_OP", "arg": 1 },
+          { "op": "RETURN_VALUE", "arg": 0 }
+        ],
+        "exceptiontable": [],
+        "instlnums": [],
+        "baseline": 0,
+        "currline": -1
+      }
+    ],
+    "instructions": [
+      { "op": "DEFINE_FUN", "arg": 0 },
+      { "op": "STORE_NAME", "arg": 0 },
+      { "op": "LOAD_NAME", "arg": 0 },
+      { "op": "LOAD_CONST", "arg": 0 },
+      { "op": "LOAD_CONST", "arg": 1 },
+      { "op": "CALL", "arg": 2 },
+      { "op": "RHINO_ECHO", "arg": 0 },
+      { "op": "RETURN_VALUE", "arg": 0 }
+    ],
+    "exceptiontable": [],
+    "instlnums": [],
+    "baseline": 0,
+    "currline": -1
+  }
+}
