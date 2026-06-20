@@ -5,42 +5,128 @@
 namespace rhino {
 
 OpcodeRegistry::OpcodeRegistry() {
-    const std::vector<std::string> names = {
-        "OPCODE_ILL",
-        "ALLOC_CLASS_TYPE", "BINARY_OP", "BUILD_DICT", "BUILD_LIST", "CALL", "COMPARE_OP",
-        "CREATE_INSTANCE", "DECLARE_IMPORT", "DECLARE_PACKAGE", "DEFINE_CLASS", "DEFINE_FUNCTION",
-        "DEFINE_MODULE", "DEFINE_ANNOTATION", "DEFINE_FLAW", "RHINO_ECHO", "FOR_ITER",
-        "GARBAGE_COLLECT", "GET_ITER", "JUMP_BACKWARD", "JUMP_FORWARD", "LOAD_ARG", "LOAD_ATTR",
-        "LOAD_BUILTIN_FUNC", "LOAD_BUILTIN_FUNC_BY_ID", "LOAD_CONST", "LOAD_CONST_VAR", "LOAD_ENV_VAR",
-        "LOAD_FUNCTION", "LOAD_FUNC_VARG", "LOAD_GLOBAL", "LOAD_IMM8", "LOAD_LAMBDA", "LOAD_MODULE",
-        "LOAD_NAME", "LOAD_SCRIPT", "LOAD_SENSE_PARSER", "LOAD_SUBSCR", "LOAD_FLAW", "MAKE_FUNCTION",
-        "PARSE_MODULE_ATTRS", "POP_JUMP_IF_FALSE", "POP_JUMP_IF_TRUE", "POP_TOP", "RETURN_VALUE",
-        "STORE_ATTR", "STORE_CONST_VAR", "STORE_ENV_VAR", "STORE_GLOBAL", "STORE_GLOBAL_CONST",
-        "STORE_NAME", "STORE_NAME_CONST", "STORE_SCRIPT", "STORE_SCRIPT_CONST", "STORE_SUBSCR",
-        "TO_BOOL", "TO_STRING", "THROW", "CATCH", "REPLACE_FUNCTION", "JUMP_IF_FALSE_OR_POP",
-        "JUMP_IF_TRUE_OR_POP", "UNARY_OP", "SLICE", "UNLET_ATTR", "UNLET_GLOBAL", "UNLET_NAME",
-        "UNLET_SCRIPT", "UNLET_SUBSCR", "UNPACK_LIST", "UNPACK_DICT", "INSTANCE_OF", "INSTANCE_NOT",
-        "DEFER_CALL", "LOAD_NONE", "LOAD_NAMED_PARAM", "BIND_NAMED_PARAM", "LOAD_NOTE", "TYPE_CAST",
-        "LOAD_INHERIT", "STORE_INHERIT", "SET_FQN", "UNSET_FQN", "TENNIS_CALL", "EXEC_NETABLOCK",
-        "SOURCE_MODULE", "SCRIPT_FINISH", "ADD_MEMORY_CLASS", "GET_CALLER_MODULE", "SLEEP",
-        "EXTENDED_ARG", "LOAD_SCRIPT_ID", "LOAD_GADGET_FUNC", "GET_PATH_BY_FQN", "EXECUTE", "SOURCE",
-        "GET_FQN_BY_PATH", "UNLET_CONST_VAR", "UNLET_VARIABLE", "LOAD_VARIABLE", "STORE_VARIABLE",
-        "DEFER", "STORE_TYPE", "YIELD_VALUE", "RETURN_GENERATOR", "BUILD_GENERICS", "BUILD_RECORD",
-        "GENERICS_INSTANCE", "TO_PREDICATE", "LOAD_MICRO_VARIABLE", "LOAD_IMPLICIT_VARIABLE",
+    const std::vector<std::pair<int, std::string>> sourceOpcodes = {
+        {0x00, "OPCODE_ILL"},
+        {0x01, "ALLOC_CLASS_TYPE"},
+        {0x02, "BINARY_OP"},
+        {0x03, "BUILD_DICT"},
+        {0x04, "BUILD_LIST"},
+        {0x05, "CALL"},
+        {0x06, "COMPARE_OP"},
+        {0x07, "CREATE_INSTANCE"},
+        {0x08, "DECLARE_IMPORT"},
+        {0x09, "DECLARE_PACKAGE"},
+        {0x0a, "DEFINE_CLASS"},
+        {0x0c, "DEFINE_MODULE"},
+        {0x0d, "DEFINE_ANNOTATION"},
+        {0x0e, "DEFINE_FLAW"},
+        {0x10, "FOR_ITER"},
+        {0x11, "GARBAGE_COLLECT"},
+        {0x12, "GET_ITER"},
+        {0x13, "JUMP_BACKWARD"},
+        {0x14, "JUMP_FORWARD"},
+        {0x15, "ECHO"},
+        {0x16, "LOAD_ATTR"},
+        {0x17, "LOAD_BUILTIN_FUNC"},
+        {0x19, "LOAD_CONST"},
+        {0x1a, "LOAD_CONST_VAR"},
+        {0x1b, "LOAD_ENV_VAR"},
+        {0x1c, "LOAD_FUNCTION"},
+        {0x1d, "LOAD_FUNC_VARG"},
+        {0x1e, "LOAD_GLOBAL"},
+        {0x20, "LOAD_LAMBDA"},
+        {0x22, "LOAD_NAME"},
+        {0x25, "LOAD_SUBSCR"},
+        {0x26, "LOAD_FLAW"},
+        {0x27, "MAKE_FUNCTION"},
+        {0x28, "PARSE_MODULE_ATTRS"},
+        {0x29, "POP_JUMP_IF_FALSE"},
+        {0x2a, "POP_JUMP_IF_TRUE"},
+        {0x2b, "POP_TOP"},
+        {0x2c, "RETURN_VALUE"},
+        {0x2d, "STORE_ATTR"},
+        {0x2e, "STORE_CONST_VAR"},
+        {0x2f, "STORE_ENV_VAR"},
+        {0x30, "STORE_GLOBAL"},
+        {0x32, "STORE_NAME"},
+        {0x34, "STORE_SCRIPT"},
+        {0x36, "STORE_SUBSCR"},
+        {0x37, "TO_BOOL"},
+        {0x39, "THROW"},
+        {0x3a, "CATCH"},
+        {0x3b, "REPLACE_FUNCTION"},
+        {0x3c, "JUMP_IF_FALSE_OR_POP"},
+        {0x3d, "JUMP_IF_TRUE_OR_POP"},
+        {0x3e, "UNARY_OP"},
+        {0x3f, "SLICE"},
+        {0x40, "UNLET_ATTR"},
+        {0x41, "UNLET_GLOBAL"},
+        {0x42, "UNLET_NAME"},
+        {0x44, "UNLET_SUBSCR"},
+        {0x45, "UNPACK_LIST"},
+        {0x46, "UNPACK_DICT"},
+        {0x47, "INSTANCE_OF"},
+        {0x48, "INSTANCE_NOT"},
+        {0x49, "DEFER_CALL"},
+        {0x4a, "LOAD_NONE"},
+        {0x4b, "LOAD_NAMED_PARAM"},
+        {0x4c, "BIND_NAMED_PARAM"},
+        {0x4d, "LOAD_NOTE"},
+        {0x4e, "TYPE_CAST"},
+        {0x51, "SET_FQN"},
+        {0x52, "UNSET_FQN"},
+        {0x53, "TENNIS_CALL"},
+        {0x54, "EXEC_NETABLOCK"},
+        {0x5a, "EXTENDED_ARG"},
+        {0x5d, "GET_PATH_BY_FQN"},
+        {0x5e, "EXECUTE"},
+        {0x5f, "SOURCE"},
+        {0x61, "UNLET_CONST_VAR"},
+        {0x62, "UNLET_VARIABLE"},
+        {0x63, "LOAD_VARIABLE"},
+        {0x64, "STORE_VARIABLE"},
+        {0x66, "STORE_TYPE"},
+        {0x67, "YIELD_VALUE"},
+        {0x68, "RETURN_GENERATOR"},
+        {0x69, "BUILD_GENERICS"},
+        {0x6a, "BUILD_RECORD"},
+        {0x6b, "GENERICS_INSTANCE"},
+        {0x6e, "LOAD_IMPLICIT_VARIABLE"}
+    };
+
+    for (const auto& item : sourceOpcodes) {
+        addWithId(item.second, item.first);
+    }
+
+    const std::vector<std::string> trainingOpcodes = {
+        "DEFINE_FUNCTION", "LOAD_IMM8", "LOAD_MODULE", "LOAD_SCRIPT", "LOAD_SENSE_PARSER",
+        "STORE_GLOBAL_CONST", "STORE_NAME_CONST", "STORE_SCRIPT_CONST", "TO_STRING",
+        "UNLET_SCRIPT", "LOAD_INHERIT", "STORE_INHERIT", "SOURCE_MODULE", "SCRIPT_FINISH",
+        "ADD_MEMORY_CLASS", "GET_CALLER_MODULE", "SLEEP", "LOAD_SCRIPT_ID", "LOAD_GADGET_FUNC",
+        "GET_FQN_BY_PATH", "DEFER", "TO_PREDICATE", "LOAD_MICRO_VARIABLE",
         "STORE_VARIABLE_CONST", "LOAD_CLASS_META", "UNLOAD_MODULE", "LOAD_GLOBAL_CONST",
         "LOAD_NAMED_PARAM_CONST", "LOAD_ANNOTATION", "EXIT_SCOPE", "BREAK", "CONTINUE_LOOP",
         "ENTER_LOOP", "LEAVE_LOOP", "CLASS_STATIC_ANNOTATION", "FUNC_STATIC_ANNOTATION",
-        "MAKE_MUTABLE", "POP_LOAD", "POP_UNPACK",
-        "DEFINE_FUN", "DEFINE_GFUN", "DEFINE_TFUN", "DEFINE_PRELOADER", "DEFINE_CONSTRUCTOR",
-        "DEFINE_LAMBDA", "DEFINE_CLOSURE", "DEFINE_ANONYMOUS",
-        "LOAD_VAR", "STORE_VAR", "LOAD_GVAR", "STORE_GVAR", "LOAD_TVAR", "STORE_TVAR",
-        "LOAD_BVAR", "STORE_BVAR",
-        "OPCODE_NUM"
+        "MAKE_MUTABLE", "POP_LOAD", "POP_UNPACK", "DEFINE_FUN", "DEFINE_GFUN", "DEFINE_TFUN",
+        "DEFINE_PRELOADER", "DEFINE_CONSTRUCTOR", "DEFINE_LAMBDA", "DEFINE_CLOSURE",
+        "DEFINE_ANONYMOUS", "LOAD_VAR", "STORE_VAR", "LOAD_GVAR", "STORE_GVAR", "LOAD_TVAR",
+        "STORE_TVAR", "LOAD_BVAR", "STORE_BVAR", "OPCODE_NUM"
     };
 
-    for (const auto& name : names) {
-        add(name);
+    int syntheticOpcode = 0x100;
+    for (const auto& name : trainingOpcodes) {
+        addWithId(name, syntheticOpcode++);
     }
+
+    addAlias("RHINO_ECHO", "ECHO");
+    addAlias("DEFINE_NOTE", "DEFINE_ANNOTATION");
+    addAlias("LOAD_BUILTIN_FUN", "LOAD_BUILTIN_FUNC");
+    addAlias("LOAD_FUN_VARG", "LOAD_FUNC_VARG");
+    addAlias("LOAD_SPAN", "LOAD_GLOBAL");
+    addAlias("STORE_SPAN", "STORE_GLOBAL");
+    addAlias("STORE_CODEBLOCK", "STORE_SCRIPT");
+    addAlias("CONVERT_BOOL", "TO_BOOL");
+    addAlias("UNLET_SPAN", "UNLET_GLOBAL");
 
     setKind("LOAD_CONST", OpargKind::ConstIndex, 0, 1, "push constants[oparg]");
     setKind("LOAD_IMM8", OpargKind::ImmInt, 0, 1, "push immediate int");
@@ -84,7 +170,7 @@ OpcodeRegistry::OpcodeRegistry() {
     setKind("LOAD_SUBSCR", OpargKind::None, 2, 1, "container[index]");
     setKind("STORE_SUBSCR", OpargKind::None, 3, 0, "container[index] = value");
     setKind("POP_TOP", OpargKind::None, 1, 0, "discard top of stack");
-    setKind("RHINO_ECHO", OpargKind::None, 1, 0, "print top of stack");
+    setKind("ECHO", OpargKind::None, 1, 0, "print top of stack");
     setKind("TO_BOOL", OpargKind::None, 1, 1, "convert to bool");
     setKind("JUMP_FORWARD", OpargKind::JumpOffset, 0, 0, "jump forward");
     setKind("JUMP_BACKWARD", OpargKind::JumpOffset, 0, 0, "jump backward");
@@ -95,13 +181,27 @@ OpcodeRegistry::OpcodeRegistry() {
 }
 
 void OpcodeRegistry::add(const std::string& name, OpargKind kind, int numpop, int numpush, const std::string& description) {
+    int opcode = specs_.empty() ? 0 : specs_.back().opcode + 1;
+    addWithId(name, opcode, kind, numpop, numpush, description);
+}
+
+void OpcodeRegistry::addWithId(const std::string& name, int opcode, OpargKind kind, int numpop, int numpush, const std::string& description) {
     if (nameToId_.find(name) != nameToId_.end()) {
         return;
     }
-    int opcode = static_cast<int>(specs_.size());
     specs_.push_back(OpcodeSpec{name, opcode, numpop, numpush, description, kind});
     nameToId_[name] = opcode;
-    idToIndex_[opcode] = specs_.size() - 1;
+    if (idToIndex_.find(opcode) == idToIndex_.end()) {
+        idToIndex_[opcode] = specs_.size() - 1;
+    }
+}
+
+void OpcodeRegistry::addAlias(const std::string& aliasName, const std::string& canonicalName) {
+    auto canonical = nameToId_.find(canonicalName);
+    if (canonical == nameToId_.end()) {
+        return;
+    }
+    nameToId_[aliasName] = canonical->second;
 }
 
 void OpcodeRegistry::setKind(const std::string& name, OpargKind kind, int numpop, int numpush, const std::string& description) {

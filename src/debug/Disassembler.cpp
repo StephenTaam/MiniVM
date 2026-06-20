@@ -11,6 +11,39 @@ std::string indent(int depth) {
     return std::string(static_cast<size_t>(depth) * 2, ' ');
 }
 
+void dumpStringList(std::ostream& out, const std::string& pad, const std::string& label, const std::vector<std::string>& values) {
+    out << pad << label << ":\n";
+    if (values.empty()) {
+        out << pad << "  empty\n";
+        return;
+    }
+    for (size_t i = 0; i < values.size(); ++i) {
+        out << pad << "  [" << i << "] " << values[i] << "\n";
+    }
+}
+
+void dumpValueList(std::ostream& out, const std::string& pad, const std::string& label, const std::vector<Value>& values) {
+    out << pad << label << ":\n";
+    if (values.empty()) {
+        out << pad << "  empty\n";
+        return;
+    }
+    for (size_t i = 0; i < values.size(); ++i) {
+        out << pad << "  [" << i << "] " << values[i].repr() << "\n";
+    }
+}
+
+void dumpIntList(std::ostream& out, const std::string& pad, const std::string& label, const std::vector<int>& values) {
+    out << pad << label << ":\n";
+    if (values.empty()) {
+        out << pad << "  empty\n";
+        return;
+    }
+    for (size_t i = 0; i < values.size(); ++i) {
+        out << pad << "  [" << i << "] " << values[i] << "\n";
+    }
+}
+
 } // namespace
 
 OpargExplanation explainOparg(const CodeBlock& block, const Instruction& inst, const OpcodeRegistry& registry) {
@@ -47,7 +80,7 @@ OpargExplanation explainOparg(const CodeBlock& block, const Instruction& inst, c
             out.lookup = "blocks[" + std::to_string(inst.oparg) + "]";
             if (inst.oparg >= 0 && static_cast<size_t>(inst.oparg) < block.blocks.size()) {
                 const auto& child = block.blocks[static_cast<size_t>(inst.oparg)];
-                out.result = codeBlockTypeName(child->type) + " " + child->cbname;
+                out.result = std::to_string(codeBlockTypeId(child->type)) + " " + codeBlockTypeName(child->type) + " " + child->cbname;
             } else {
                 out.result = "<out of range>";
             }
@@ -158,39 +191,46 @@ void Disassembler::dumpProgram(const Program& program, std::ostream& out) const 
 
 void Disassembler::dumpCodeBlock(const CodeBlock& block, std::ostream& out, int depth) const {
     std::string pad = indent(depth);
-    out << pad << "=== CodeBlock: " << block.cbname << " type=" << codeBlockTypeName(block.type) << " ===\n";
+    out << pad << "=== CodeBlock: " << block.cbname
+        << " type=" << codeBlockTypeId(block.type) << " " << codeBlockTypeName(block.type) << " ===\n";
+    out << pad << "baseline: " << block.baseline << "\n";
+    out << pad << "currline: " << block.currline << "\n";
 
-    out << pad << "constants:\n";
-    if (block.constants.empty()) {
-        out << pad << "  empty\n";
-    } else {
-        for (size_t i = 0; i < block.constants.size(); ++i) {
-            out << pad << "  [" << i << "] " << block.constants[i].repr() << "\n";
-        }
-    }
-
-    out << pad << "names:\n";
-    if (block.names.empty()) {
-        out << pad << "  empty\n";
-    } else {
-        for (size_t i = 0; i < block.names.size(); ++i) {
-            out << pad << "  [" << i << "] " << block.names[i] << "\n";
-        }
-    }
+    dumpValueList(out, pad, "constants", block.constants);
+    dumpStringList(out, pad, "names", block.names);
 
     out << pad << "blocks:\n";
     if (block.blocks.empty()) {
         out << pad << "  empty\n";
     } else {
         for (size_t i = 0; i < block.blocks.size(); ++i) {
-            out << pad << "  [" << i << "] " << codeBlockTypeName(block.blocks[i]->type) << " " << block.blocks[i]->cbname << "\n";
+            out << pad << "  [" << i << "] type=" << codeBlockTypeId(block.blocks[i]->type)
+                << " " << codeBlockTypeName(block.blocks[i]->type) << " " << block.blocks[i]->cbname << "\n";
         }
     }
 
-    if (!block.argnames.empty()) {
-        out << pad << "argnames:\n";
-        for (size_t i = 0; i < block.argnames.size(); ++i) {
-            out << pad << "  [" << i << "] " << block.argnames[i] << "\n";
+    dumpStringList(out, pad, "argnames", block.argnames);
+    dumpValueList(out, pad, "defaults", block.defaults);
+    dumpStringList(out, pad, "flags", block.flags);
+    dumpStringList(out, pad, "inherits", block.inherits);
+    dumpStringList(out, pad, "generics", block.generics);
+
+    out << pad << "annotations:\n";
+    if (block.annotations.empty()) {
+        out << pad << "  empty\n";
+    } else {
+        for (size_t i = 0; i < block.annotations.size(); ++i) {
+            out << pad << "  [" << i << "] " << block.annotations[i].name
+                << " = " << block.annotations[i].value.repr() << "\n";
+        }
+    }
+
+    out << pad << "syntactic:\n";
+    if (block.syntactic.empty()) {
+        out << pad << "  empty\n";
+    } else {
+        for (const auto& item : block.syntactic) {
+            out << pad << "  " << item.first << " = " << item.second.repr() << "\n";
         }
     }
 
@@ -212,6 +252,8 @@ void Disassembler::dumpCodeBlock(const CodeBlock& block, std::ostream& out, int 
                 << " handler=" << item.handlerIp << " type=" << item.type << "\n";
         }
     }
+
+    dumpIntList(out, pad, "instlnums", block.instlnums);
 
     for (const auto& child : block.blocks) {
         out << "\n";

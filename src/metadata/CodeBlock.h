@@ -11,10 +11,10 @@
 namespace rhino {
 
 enum class CodeBlockType {
-    Normal,
-    Function,
-    Class,
-    Neta
+    Normal = 0,
+    Function = 1,
+    Class = 2,
+    Neta = 4
 };
 
 struct Annotation {
@@ -45,6 +45,7 @@ struct CodeBlock {
 };
 
 std::string codeBlockTypeName(CodeBlockType type);
+int codeBlockTypeId(CodeBlockType type);
 CodeBlockType parseCodeBlockType(const std::string& text);
 
 } // namespace rhino

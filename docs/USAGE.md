@@ -87,9 +87,16 @@ build/rhino_lab run examples/function_call.json --entry root --trace
 ### dump
 
 只加载 metadata，并打印 Program / CodeBlock / constants / names / blocks / instructions / exceptiontable。
+现在也会打印 CodeBlock 静态扩展字段，包括 `baseline`、`currline`、`instlnums`、`argnames`、`defaults`、`flags`、`inherits`、`annotations`、`syntactic`、`generics`。
 
 ```bash
 build/rhino_lab dump examples/minimal.json
+```
+
+查看资料风格的 ClassCodeBlock 静态字段：
+
+```bash
+build/rhino_lab dump examples/codeblock_static_shape.json
 ```
 
 ### disasm
@@ -108,13 +115,22 @@ build/rhino_lab disasm examples/function_call.json
 build/rhino_lab run examples/minimal.json --dump-tables --trace
 ```
 
+当前 `examples/minimal.json` 表达的是：
+
+```text
+a = 3
+b = 2
+c = a * b
+echo c
+```
+
 预期会在输出中看到：
 
 ```text
-LOAD_CONST 0 ; constants[0] = int(1)
+LOAD_CONST 0 ; constants[0] = int(3)
 STORE_NAME 0 ; names[0] = a
-BINARY_OP 1 ; NB_ADD
-3
+BINARY_OP 3 ; NB_MULTIPLY
+6
 ```
 
 ### 函数调用示例
@@ -133,14 +149,22 @@ build/rhino_lab run examples/function_call.json --dump-tables --trace
 
 ## Metadata JSON 基本结构
 
+当前没有源码 parser，正式输入是静态 CodeBlock JSON。如何把伪代码整理成 JSON、VM 如何执行，见 [LANGUAGE_VM_GUIDE.md](LANGUAGE_VM_GUIDE.md)。
+
 完整字段说明见 [METADATA_JSON.md](METADATA_JSON.md)。
+
+如果你是按资料截图里的 `type: 0`、`opcode/oparg`、`ECHO`、`LOAD_BUILTIN_FUN` 等风格写，可以看 [SOURCE_COMPAT.md](SOURCE_COMPAT.md)。项目里也有对应示例：
+
+```bash
+build/rhino_lab run examples/source_style.json --dump-tables --trace
+```
 
 ```json
 {
   "version": 1,
   "entry": "main",
   "root": {
-    "type": "function",
+    "type": 0,
     "cbname": "main",
     "constants": [
       { "type": "int", "value": 1 },
@@ -149,22 +173,21 @@ build/rhino_lab run examples/function_call.json --dump-tables --trace
     "names": ["a", "b", "c"],
     "blocks": [],
     "instructions": [
-      { "op": "LOAD_CONST", "arg": 0 },
-      { "op": "STORE_NAME", "arg": 0 },
-      { "op": "LOAD_CONST", "arg": 1 },
-      { "op": "STORE_NAME", "arg": 1 },
-      { "op": "LOAD_NAME", "arg": 0 },
-      { "op": "LOAD_NAME", "arg": 1 },
-      { "op": "BINARY_OP", "arg": 1 },
-      { "op": "STORE_NAME", "arg": 2 },
-      { "op": "LOAD_NAME", "arg": 2 },
-      { "op": "RHINO_ECHO", "arg": 0 },
-      { "op": "RETURN_VALUE", "arg": 0 }
+      { "opcode": 25, "oparg": 0 },
+      { "opcode": 50, "oparg": 0 },
+      { "op": "LOAD_CONST", "oparg": 1 },
+      { "op": "STORE_NAME", "oparg": 1 },
+      { "op": "LOAD_NAME", "oparg": 0 },
+      { "op": "LOAD_NAME", "oparg": 1 },
+      { "op": "BINARY_OP", "oparg": 1 },
+      { "opcode": 50, "oparg": 2 },
+      { "op": "LOAD_NAME", "oparg": 2 },
+      { "op": "ECHO", "oparg": 0 },
+      { "opcode": 44, "oparg": 0 }
     ],
     "exceptiontable": [],
     "instlnums": [],
-    "baseline": 0,
-    "currline": -1
+    "baseline": 0
   }
 }
 ```
@@ -203,7 +226,7 @@ LOAD_VAR STORE_VAR LOAD_GVAR STORE_GVAR LOAD_TVAR STORE_TVAR LOAD_BVAR STORE_BVA
 LOAD_ARG LOAD_BUILTIN_FUNC
 BINARY_OP UNARY_OP COMPARE_OP
 BUILD_LIST BUILD_DICT LOAD_SUBSCR STORE_SUBSCR
-POP_TOP RHINO_ECHO TO_BOOL
+POP_TOP ECHO TO_BOOL
 JUMP_FORWARD JUMP_BACKWARD
 POP_JUMP_IF_FALSE POP_JUMP_IF_TRUE
 JUMP_IF_FALSE_OR_POP JUMP_IF_TRUE_OR_POP

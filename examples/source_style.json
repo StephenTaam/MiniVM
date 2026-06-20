@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "entry": "main",
+  "root": {
+    "type": 0,
+    "cbname": "main",
+    "constants": [
+      { "type": "int", "value": 1 },
+      { "type": "int", "value": 2 }
+    ],
+    "names": ["a", "b", "c"],
+    "blocks": [],
+    "instructions": [
+      { "opcode": 25, "oparg": 0 },
+      { "opcode": 50, "oparg": 0 },
+      { "op": "LOAD_CONST", "oparg": 1 },
+      { "op": "STORE_NAME", "oparg": 1 },
+      { "op": "LOAD_NAME", "oparg": 0 },
+      { "op": "LOAD_NAME", "oparg": 1 },
+      { "op": "BINARY_OP", "oparg": 1 },
+      { "opcode": 50, "oparg": 2 },
+      { "op": "LOAD_NAME", "oparg": 2 },
+      { "op": "ECHO", "oparg": 0 },
+      { "opcode": 44, "oparg": 0 }
+    ],
+    "exceptiontable": [],
+    "instlnums": [],
+    "baseline": 0
+  }
+}

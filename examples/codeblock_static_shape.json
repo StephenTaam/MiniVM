@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "entry": "script",
+  "root": {
+    "type": 0,
+    "cbname": "script",
+    "constants": [
+      { "type": "string", "value": "app.test0220.demo.membercheck" }
+    ],
+    "names": ["Example"],
+    "blocks": [
+      {
+        "type": 2,
+        "cbname": "Example",
+        "constants": [
+          { "type": "string", "value": "app.test0220.demo.membercheck.Example" },
+          { "type": "string", "value": "B" },
+          { "type": "string", "value": "C" }
+        ],
+        "name": ["regex", "age"],
+        "blocks": [],
+        "instructions": [
+          { "op": "LOAD_CONST", "oparg": 0 },
+          { "op": "STORE_CONST_VAR", "oparg": 0 },
+          { "op": "LOAD_NAME", "oparg": 1 },
+          { "op": "ECHO", "oparg": 0 },
+          { "op": "LOAD_IMPLICIT_VARIABLE", "oparg": 0 }
+        ],
+        "exceptiontable": [],
+        "instlnums": [],
+        "baseline": 0,
+        "inherits": ["B", "C"],
+        "annotations": [],
+        "syntactic": [],
+        "generics": []
+      }
+    ],
+    "instructions": [
+      { "op": "LOAD_CONST", "oparg": 0 },
+      { "op": "DECLARE_PACKAGE", "oparg": 0 },
+      { "op": "DEFINE_CLASS", "oparg": 0 },
+      { "op": "STORE_NAME", "oparg": 0 },
+      { "op": "RETURN_VALUE", "oparg": 0 }
+    ],
+    "exceptiontable": [],
+    "instlnums": [],
+    "baseline": 0
+  }
+}

@@ -23,6 +23,14 @@ cmake --build build-cmake
 
 中文使用说明见 [docs/USAGE.md](docs/USAGE.md)。
 
+当前语言/VM 的写法、执行模型和设计边界见 [docs/LANGUAGE_VM_GUIDE.md](docs/LANGUAGE_VM_GUIDE.md)。
+
+指令集参考见 [docs/INSTRUCTION_SET.md](docs/INSTRUCTION_SET.md)。
+
+Metadata JSON 字段说明见 [docs/METADATA_JSON.md](docs/METADATA_JSON.md)。
+
+与资料截图对齐的 CodeBlock 字段和 opcode 数值表见 [docs/SOURCE_COMPAT.md](docs/SOURCE_COMPAT.md)。
+
 Supported commands:
 
 ```bash

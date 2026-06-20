@@ -11,12 +11,30 @@ bool has(const Json& json, const std::string& key) {
     return json.isObject() && json.contains(key);
 }
 
+bool hasAny(const Json& json, const std::string& first, const std::string& second) {
+    return has(json, first) || has(json, second);
+}
+
+const Json& atAny(const Json& json, const std::string& first, const std::string& second) {
+    return has(json, first) ? json[first] : json[second];
+}
+
 std::string optionalString(const Json& json, const std::string& key, const std::string& fallback = "") {
     return has(json, key) ? json[key].asString() : fallback;
 }
 
 int optionalInt(const Json& json, const std::string& key, int fallback = 0) {
     return has(json, key) ? json[key].asInt() : fallback;
+}
+
+int optionalInstructionArg(const Json& json) {
+    if (has(json, "arg")) {
+        return json["arg"].asInt();
+    }
+    if (has(json, "oparg")) {
+        return json["oparg"].asInt();
+    }
+    return 0;
 }
 
 std::vector<std::string> loadStringArray(const Json& json) {
@@ -43,20 +61,50 @@ std::string codeBlockTypeName(CodeBlockType type) {
     return "normal";
 }
 
+int codeBlockTypeId(CodeBlockType type) {
+    return static_cast<int>(type);
+}
+
 CodeBlockType parseCodeBlockType(const std::string& text) {
-    if (text == "normal" || text == "Normal") {
+    if (text == "0" || text == "normal" || text == "Normal" || text == "script" || text == "Script" || text == "CodeBlock") {
         return CodeBlockType::Normal;
     }
-    if (text == "function" || text == "Function") {
+    if (text == "1" || text == "function" || text == "Function" || text == "func" || text == "FuncCodeBlock") {
         return CodeBlockType::Function;
     }
-    if (text == "class" || text == "Class") {
+    if (text == "2" || text == "class" || text == "Class" || text == "ClassCodeBlock") {
         return CodeBlockType::Class;
     }
-    if (text == "neta" || text == "Neta") {
+    if (text == "4" || text == "neta" || text == "Neta" || text == "NetaCodeBlock") {
         return CodeBlockType::Neta;
     }
     throw std::runtime_error("unknown CodeBlock type: " + text);
+}
+
+CodeBlockType parseCodeBlockType(int value) {
+    switch (value) {
+        case 0:
+            return CodeBlockType::Normal;
+        case 1:
+            return CodeBlockType::Function;
+        case 2:
+            return CodeBlockType::Class;
+        case 4:
+            return CodeBlockType::Neta;
+        default:
+            throw std::runtime_error("unknown numeric CodeBlock type: " + std::to_string(value));
+    }
+}
+
+CodeBlockType parseCodeBlockTypeField(const Json& json) {
+    if (!has(json, "type")) {
+        return CodeBlockType::Normal;
+    }
+    const Json& type = json["type"];
+    if (type.isNumber()) {
+        return parseCodeBlockType(type.asInt());
+    }
+    return parseCodeBlockType(type.asString());
 }
 
 MetadataLoader::MetadataLoader(const OpcodeRegistry& registry) : registry_(registry) {}
@@ -89,7 +137,7 @@ std::shared_ptr<CodeBlock> MetadataLoader::loadCodeBlock(const Json& json) const
     }
 
     auto block = std::make_shared<CodeBlock>();
-    block->type = parseCodeBlockType(optionalString(json, "type", "normal"));
+    block->type = parseCodeBlockTypeField(json);
     block->cbname = optionalString(json, "cbname", "");
     block->baseline = optionalInt(json, "baseline", 0);
     block->currline = optionalInt(json, "currline", -1);
@@ -99,8 +147,8 @@ std::shared_ptr<CodeBlock> MetadataLoader::loadCodeBlock(const Json& json) const
             block->constants.push_back(loadValue(item));
         }
     }
-    if (has(json, "names")) {
-        block->names = loadStringArray(json["names"]);
+    if (hasAny(json, "names", "name")) {
+        block->names = loadStringArray(atAny(json, "names", "name"));
     }
     if (has(json, "blocks")) {
         for (const auto& item : json["blocks"].asArray()) {
@@ -142,8 +190,13 @@ std::shared_ptr<CodeBlock> MetadataLoader::loadCodeBlock(const Json& json) const
         block->generics = loadStringArray(json["generics"]);
     }
     if (has(json, "syntactic")) {
-        for (const auto& item : json["syntactic"].asObject()) {
-            block->syntactic[item.first] = loadValue(item.second);
+        const Json& syntactic = json["syntactic"];
+        if (syntactic.isObject()) {
+            for (const auto& item : syntactic.asObject()) {
+                block->syntactic[item.first] = loadValue(item.second);
+            }
+        } else if (!syntactic.isArray() || !syntactic.asArray().empty()) {
+            throw std::runtime_error("syntactic must be an object or an empty array");
         }
     }
     if (has(json, "annotations")) {
@@ -229,7 +282,7 @@ Instruction MetadataLoader::loadInstruction(const Json& json, int index, const s
     }
 
     Instruction inst;
-    inst.oparg = optionalInt(json, "arg", 0);
+    inst.oparg = optionalInstructionArg(json);
     inst.resolvedTarget = optionalInt(json, "target", -1);
     inst.line = optionalInt(json, "line", -1);
     if (inst.line < 0 && index >= 0 && index < static_cast<int>(instlnums.size())) {
@@ -237,8 +290,8 @@ Instruction MetadataLoader::loadInstruction(const Json& json, int index, const s
     }
 
     if (has(json, "op")) {
-        inst.opname = json["op"].asString();
-        inst.opcode = registry_.idForName(inst.opname);
+        inst.opcode = registry_.idForName(json["op"].asString());
+        inst.opname = registry_.nameForId(inst.opcode);
     } else if (has(json, "opcode")) {
         inst.opcode = json["opcode"].asInt();
         inst.opname = registry_.nameForId(inst.opcode);

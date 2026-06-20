@@ -227,7 +227,7 @@ void VM::executeInstruction(const Instruction& inst, int ip, int& nextIp, bool& 
         opStoreSubscr();
     } else if (op == "POP_TOP") {
         (void)pop();
-    } else if (op == "RHINO_ECHO") {
+    } else if (op == "ECHO" || op == "RHINO_ECHO") {
         std::cout << pop().toString() << "\n";
     } else if (op == "TO_BOOL") {
         push(Value::boolean(pop().truthy()));

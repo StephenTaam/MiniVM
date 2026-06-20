@@ -38,7 +38,7 @@
       { "op": "LOAD_CONST", "arg": 0 },
       { "op": "LOAD_CONST", "arg": 1 },
       { "op": "CALL", "arg": 2 },
-      { "op": "RHINO_ECHO", "arg": 0 },
+      { "op": "ECHO", "arg": 0 },
       { "op": "RETURN_VALUE", "arg": 0 }
     ],
     "exceptiontable": [],

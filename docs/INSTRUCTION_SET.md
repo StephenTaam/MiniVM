@@ -2,6 +2,8 @@
 
 这份文档描述当前训练 VM 支持的 metadata 指令格式、`oparg` 解释规则、栈变化和执行语义。
 
+如果想从“怎么写一个 JSON 程序”开始看，先读 [LANGUAGE_VM_GUIDE.md](LANGUAGE_VM_GUIDE.md)。如果想对照用户资料截图里的 opcode 数值，读 [SOURCE_COMPAT.md](SOURCE_COMPAT.md)。
+
 ## 基本模型
 
 VM 不直接读取源码，只读取 codegen 后的 metadata：
@@ -20,13 +22,17 @@ CodeBlock
 { "op": "LOAD_CONST", "arg": 0 }
 ```
 
-也支持数字 opcode：
+也支持资料里的数字 opcode：
 
 ```json
 { "opcode": 25, "arg": 0 }
 ```
 
+其中 `25` 是 `0x19`，对应资料表里的 `LOAD_CONST`。JSON 标准不支持 `0x19` 字面量，所以文件里写十进制。
+
 推荐训练和调试时使用字符串 `op`，可读性更好。
+
+资料对照的完整 opcode 数值表见 [SOURCE_COMPAT.md](SOURCE_COMPAT.md)。
 
 ## 栈记法
 
@@ -63,6 +69,12 @@ after:  [..., constants[0]]
 | `ArgCount` | 调用参数数量 | `CALL 2` |
 | `ImmInt` | 立即数整数 | `LOAD_IMM8 7` |
 | `Unknown` | 已注册但未定义解释方式 | 未实现 opcode |
+
+`arg` 也可以写成资料风格字段名 `oparg`：
+
+```json
+{ "op": "LOAD_CONST", "oparg": 0 }
+```
 
 使用 `--trace` 时，VM 会打印：
 
@@ -110,6 +122,14 @@ Trace 示例：
 ```text
 LOAD_CONST 0 ; constants[0] = int(1)
 ```
+
+资料数值写法：
+
+```json
+{ "opcode": 25, "oparg": 0 }
+```
+
+因为 `0x19 / 25` 对应 `LOAD_CONST`。
 
 ### LOAD_IMM8
 
@@ -467,12 +487,14 @@ else:
 
 ## 内置函数
 
-### LOAD_BUILTIN_FUNC
+### LOAD_BUILTIN_FUNC / LOAD_BUILTIN_FUN
 
 ```text
 LOAD_BUILTIN_FUNC arg
 oparg kind: NameIndex
 ```
+
+资料截图里也出现 `LOAD_BUILTIN_FUN`，当前 loader 会归一化成 `LOAD_BUILTIN_FUNC`。
 
 语义：
 
@@ -492,6 +514,22 @@ push(builtins[name])
 | `bool` | 1 | `bool` | 转布尔 |
 
 也可以通过 `LOAD_NAME print` 调用，因为 `LOAD_NAME` 会查 `builtins`。
+
+## 资料指令别名
+
+资料截图里有一些旧名或别名，当前 loader 会自动归一化：
+
+| 资料/旧名 | 当前规范名 | 执行状态 |
+| --- | --- | --- |
+| `RHINO_ECHO` | `ECHO` | 已实现，旧名兼容 |
+| `LOAD_BUILTIN_FUN` | `LOAD_BUILTIN_FUNC` | 已实现 |
+| `LOAD_FUN_VARG` | `LOAD_FUNC_VARG` | 已注册，未实现 |
+| `LOAD_SPAN` | `LOAD_GLOBAL` | 已实现为 global/builtin 查找 |
+| `STORE_SPAN` | `STORE_GLOBAL` | 已实现为 globals 写入 |
+| `STORE_CODEBLOCK` | `STORE_SCRIPT` | 已注册，未实现 |
+| `CONVERT_BOOL` | `TO_BOOL` | 已实现 |
+| `DEFINE_NOTE` | `DEFINE_ANNOTATION` | 已注册，未实现 |
+| `UNLET_SPAN` | `UNLET_GLOBAL` | 已注册，未实现 |
 
 ## 算术和逻辑
 
@@ -887,10 +925,10 @@ oparg kind: None
 pop()
 ```
 
-### RHINO_ECHO
+### ECHO
 
 ```text
-RHINO_ECHO
+ECHO
 oparg kind: None
 ```
 
@@ -1019,7 +1057,7 @@ RuntimeError:
   "names": ["a"],
   "instructions": [
     { "op": "LOAD_NAME", "arg": 0 },
-    { "op": "RHINO_ECHO", "arg": 0 }
+    { "op": "ECHO", "arg": 0 }
   ]
 }
 ```
@@ -1049,7 +1087,7 @@ RuntimeError:
     { "op": "COMPARE_OP", "arg": 5 },
     { "op": "POP_JUMP_IF_FALSE", "arg": 7 },
     { "op": "LOAD_NAME", "arg": 0 },
-    { "op": "RHINO_ECHO", "arg": 0 },
+    { "op": "ECHO", "arg": 0 },
     { "op": "RETURN_VALUE", "arg": 0 },
     { "op": "RETURN_VALUE", "arg": 0 }
   ]

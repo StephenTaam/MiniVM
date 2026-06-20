@@ -42,6 +42,8 @@ public:
 
 private:
     void add(const std::string& name, OpargKind kind = OpargKind::Unknown, int numpop = -1, int numpush = -1, const std::string& description = "");
+    void addWithId(const std::string& name, int opcode, OpargKind kind = OpargKind::Unknown, int numpop = -1, int numpush = -1, const std::string& description = "");
+    void addAlias(const std::string& aliasName, const std::string& canonicalName);
     void setKind(const std::string& name, OpargKind kind, int numpop = -1, int numpush = -1, const std::string& description = "");
 
     std::vector<OpcodeSpec> specs_;
