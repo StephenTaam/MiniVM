@@ -133,6 +133,8 @@ build/rhino_lab run examples/function_call.json --dump-tables --trace
 
 ## Metadata JSON 基本结构
 
+完整字段说明见 [METADATA_JSON.md](METADATA_JSON.md)。
+
 ```json
 {
   "version": 1,
@@ -209,6 +211,8 @@ DEFINE_FUN DEFINE_FUNCTION DEFINE_GFUN DEFINE_TFUN DEFINE_PRELOADER DEFINE_CONST
 CALL RETURN_VALUE
 DEFINE_CLASS CREATE_INSTANCE LOAD_ATTR STORE_ATTR
 ```
+
+更详细的每条指令说明、栈变化和示例见 [INSTRUCTION_SET.md](INSTRUCTION_SET.md)。
 
 未实现的 opcode 会抛出带上下文的 `RuntimeError`，里面包含：
 
