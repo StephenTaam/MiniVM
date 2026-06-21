@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace rhino {
+namespace stt {
 namespace {
 
 void expectArgCount(const std::vector<Value>& args, size_t expected, const std::string& name) {
@@ -74,4 +74,4 @@ BuiltinMap createBuiltins() {
     return builtins;
 }
 
-} // namespace rhino
+} // namespace stt

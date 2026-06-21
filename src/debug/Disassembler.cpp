@@ -4,7 +4,7 @@
 #include <ostream>
 #include <sstream>
 
-namespace rhino {
+namespace stt {
 namespace {
 
 std::string indent(int depth) {
@@ -261,4 +261,4 @@ void Disassembler::dumpCodeBlock(const CodeBlock& block, std::ostream& out, int 
     }
 }
 
-} // namespace rhino
+} // namespace stt

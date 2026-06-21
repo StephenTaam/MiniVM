@@ -5,10 +5,10 @@
 #include <string>
 #include <unordered_map>
 
-namespace rhino {
+namespace stt {
 
 using BuiltinMap = std::unordered_map<std::string, Value>;
 
 BuiltinMap createBuiltins();
 
-} // namespace rhino
+} // namespace stt

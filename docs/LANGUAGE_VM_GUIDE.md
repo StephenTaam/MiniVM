@@ -2,17 +2,17 @@
 
 这份文档回答一个核心问题：现在这个项目到底怎么“写程序”、怎么运行。
 
-当前版本没有实现 `.ose` / Phoenix 源码解析器，也没有从源码生成 JSON 的编译器。可执行输入是静态 CodeBlock metadata JSON，加上一组栈式 bytecode 指令。可以把它理解成一门“metadata assembly”：
+当前版本没有实现 `.ose` 源码解析器，也没有从源码生成 JSON 的编译器。可执行输入是静态 CodeBlock metadata JSON，加上一组栈式 bytecode 指令。可以把它理解成一门“metadata assembly”：
 
 ```text
-源语言伪代码 -> 手写/生成 CodeBlock JSON -> rhino_lab VM 执行
+源语言伪代码 -> 手写/生成 CodeBlock JSON -> STT Metadata VM 执行
 ```
 
 以后如果补编译器，编译器只需要输出同一套 JSON 数据结构即可。
 
 ## 设计边界
 
-用户资料里的数据结构是规范来源，本项目按这个结构读取和展示：
+原始资料里的数据结构是规范来源，本项目按这个结构读取和展示：
 
 | CodeBlock 类 | `type` | 用途 |
 | --- | ---: | --- |
@@ -21,7 +21,7 @@
 | `ClassCodeBlock` | `2` | 类代码块 |
 | `NetaCodeBlock` | `4` | Neta 代码块 |
 
-指令名和 opcode 数值尽量按资料截图登记。能确定语义的指令会执行；语义不完整或当前训练 VM 不需要的指令，会保留在指令表里，支持 `dump` / `disasm`，执行到时抛出清晰的 `RuntimeError`。
+指令名和 opcode 数值尽量按原始资料登记。当前 registry 中的指令都已经接入 VM 执行分支；其中算术、变量、函数、类、容器、跳转等指令按可执行语义运行，依赖原始宿主环境的指令使用训练版本地语义模拟。只有未知 opcode 或显式非法指令 `OPCODE_ILL` 会在执行时报带上下文的 `RuntimeError`。
 
 ## 当前语言形态
 
@@ -156,7 +156,7 @@ RETURN_VALUE 0   pop 栈顶作为返回值；空栈则返回 null
 CALL 2
 ```
 
-调用时会创建新的 frame，并按 `argnames` 把参数绑定到函数局部变量。
+调用时会创建新的 frame，并按 `argnames` 把位置参数、命名参数和默认值绑定到函数局部变量。命名参数用 `LOAD_NAMED_PARAM` + `BIND_NAMED_PARAM` 生成；列表或字典参数可以用 `EXTENDED_ARG` 交给 `CALL` 展开。
 
 ## 推荐写程序流程
 
@@ -169,8 +169,8 @@ CALL 2
 7. 运行 `run --trace --dump-tables` 检查栈变化。
 
 ```bash
-build/rhino_lab dump your.json
-build/rhino_lab run your.json --dump-tables --trace
+build/stt_vm dump your.json
+build/stt_vm run your.json --dump-tables --trace
 ```
 
 ## 示例：加法
@@ -232,12 +232,31 @@ root.instructions:
 
 完整文件见 `examples/function_call.json`。
 
-## 示例：资料静态结构
+## 示例：命名参数、模块和作用域
 
-`examples/codeblock_static_shape.json` 用来验证截图里的结构：
+更完整的训练 VM 示例见：
 
 ```bash
-build/rhino_lab dump examples/codeblock_static_shape.json
+build/stt_vm run examples/advanced_instructions.json --dump-tables --trace
+```
+
+它演示了几种更接近资料指令集的写法：
+
+```text
+LOAD_NAMED_PARAM / BIND_NAMED_PARAM  -> fn(a, b, c=3)
+EXTENDED_ARG                         -> fn(*[1, 2, 3]) 风格展开
+STORE_VARIABLE global:gx             -> 写入 global 作用域
+LOAD_MODULE + STORE_ATTR             -> 模块对象属性持久化
+DEFINE_CLASS + CALL 0                -> class 直接创建实例
+TYPE_CAST                            -> 栈顶类型名或 constants[arg] 指定目标类型
+```
+
+## 示例：资料静态结构
+
+`examples/codeblock_static_shape.json` 用来验证原始资料里的结构：
+
+```bash
+build/stt_vm dump examples/codeblock_static_shape.json
 ```
 
 它包含：
@@ -251,7 +270,7 @@ ClassCodeBlock.syntactic
 ClassCodeBlock.generics
 ```
 
-其中 `DECLARE_PACKAGE`、`STORE_CONST_VAR`、`LOAD_IMPLICIT_VARIABLE` 等目前只注册和反汇编，不作为可执行核心语义。
+其中 `DECLARE_PACKAGE`、`STORE_CONST_VAR`、`LOAD_IMPLICIT_VARIABLE` 等现在都有训练版执行语义；和 Harmony 真实运行时相关的副作用会用本地 metadata/模块表模拟。
 
 ## 当前实现策略
 
@@ -273,7 +292,7 @@ ClassCodeBlock.generics
 2. 子 CodeBlock 统一显式放在 blocks，而不是在 constants 中递归展开
 3. `currline` 是训练版保留字段，资料核心表里没有，当前只保存和 dump
 4. 字符串 type 只作为便利兼容，规范写法仍是数字 type
-5. 未实现 opcode 保留在 registry，执行到时报 RuntimeError
+5. 宿主相关 opcode 使用训练版语义；未知或非法 opcode 执行到时报 RuntimeError
 ```
 
 ## 目前不包含什么
@@ -285,7 +304,8 @@ ClassCodeBlock.generics
 2. 从源码自动生成 CodeBlock JSON 的 compiler
 3. 二进制 RSE 读写
 4. Harmony/Neta 真实运行时
-5. 完整异常、生成器、泛型、模块导入、环境变量语义
+5. Harmony/Neta 宿主环境中的真实 import/source/execute 副作用
+6. 完整源码级异常类型系统、协程调度器和泛型类型检查器
 ```
 
-这些都可以在后续迭代中基于同一套 CodeBlock 数据结构继续补。
+异常、生成器、泛型、模块、环境变量等指令已经有训练版 VM 语义；这些语义用于学习、调试和验证 metadata，不等同于真实 Harmony 运行时。

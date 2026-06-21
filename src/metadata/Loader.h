@@ -7,7 +7,7 @@
 #include <memory>
 #include <string>
 
-namespace rhino {
+namespace stt {
 
 class MetadataLoader {
 public:
@@ -25,4 +25,4 @@ private:
     const OpcodeRegistry& registry_;
 };
 
-} // namespace rhino
+} // namespace stt

@@ -1,6 +1,6 @@
-# Rhino Codegen Metadata VM Lab
+# STT Metadata VM
 
-This is a small C++17 training VM for Rhino/Phoenix-style codegen metadata. It loads a JSON metadata file, resolves opcode/oparg pairs against each `CodeBlock` table, dumps disassembly, and executes a focused stack VM with trace output.
+This is a small C++17 training VM for STT codegen metadata. It loads a JSON metadata file, resolves opcode/oparg pairs against each `CodeBlock` table, dumps disassembly, and executes a focused stack VM with trace output.
 
 ## Build
 
@@ -11,7 +11,7 @@ make
 ## Run
 
 ```bash
-build/rhino_lab run examples/minimal.json --trace --dump-tables
+build/stt_vm run examples/minimal.json --trace --dump-tables
 ```
 
 For Windows or cross-platform builds, use CMake:
@@ -29,14 +29,14 @@ cmake --build build-cmake
 
 Metadata JSON 字段说明见 [docs/METADATA_JSON.md](docs/METADATA_JSON.md)。
 
-与资料截图对齐的 CodeBlock 字段和 opcode 数值表见 [docs/SOURCE_COMPAT.md](docs/SOURCE_COMPAT.md)。
+与原始资料对齐的 CodeBlock 字段和 opcode 数值表见 [docs/SOURCE_COMPAT.md](docs/SOURCE_COMPAT.md)。
 
 Supported commands:
 
 ```bash
-build/rhino_lab run <metadata.json> [--trace] [--dump-tables] [--entry name]
-build/rhino_lab dump <metadata.json>
-build/rhino_lab disasm <metadata.json>
+build/stt_vm run <metadata.json> [--trace] [--dump-tables] [--entry name]
+build/stt_vm dump <metadata.json>
+build/stt_vm disasm <metadata.json>
 ```
 
 The first version intentionally focuses on the training surface:
@@ -46,6 +46,6 @@ The first version intentionally focuses on the training surface:
 - opcode registry and oparg resolver
 - stack-frame execution
 - trace output before and after each instruction
-- clear runtime errors for unsupported opcodes
+- clear runtime errors for unknown or illegal opcodes
 
 No external JSON dependency is required; the project includes a small JSON parser in `src/util`.

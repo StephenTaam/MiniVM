@@ -1,4 +1,4 @@
-# Rhino Lab 使用说明
+# STT Metadata VM 使用说明
 
 ## 平台支持
 
@@ -27,7 +27,7 @@ make
 生成程序：
 
 ```bash
-build/rhino_lab
+build/stt_vm
 ```
 
 ### Windows / macOS / Linux 通用 CMake
@@ -40,7 +40,7 @@ cmake --build build-cmake
 Windows Visual Studio 生成的可执行文件通常在：
 
 ```text
-build-cmake\Debug\rhino_lab.exe
+build-cmake\Debug\stt_vm.exe
 ```
 
 Release 构建：
@@ -53,15 +53,15 @@ cmake --build build-cmake --config Release
 Visual Studio 多配置生成器下，Release 可执行文件通常在：
 
 ```text
-build-cmake\Release\rhino_lab.exe
+build-cmake\Release\stt_vm.exe
 ```
 
 ## 命令格式
 
 ```bash
-rhino_lab run <metadata.json> [--trace] [--dump-tables] [--entry name]
-rhino_lab dump <metadata.json>
-rhino_lab disasm <metadata.json>
+stt_vm run <metadata.json> [--trace] [--dump-tables] [--entry name]
+stt_vm dump <metadata.json>
+stt_vm disasm <metadata.json>
 ```
 
 ### run
@@ -69,19 +69,19 @@ rhino_lab disasm <metadata.json>
 加载 metadata JSON，并执行 VM。
 
 ```bash
-build/rhino_lab run examples/minimal.json
+build/stt_vm run examples/minimal.json
 ```
 
 带 trace 和静态表 dump：
 
 ```bash
-build/rhino_lab run examples/minimal.json --dump-tables --trace
+build/stt_vm run examples/minimal.json --dump-tables --trace
 ```
 
 指定入口 CodeBlock：
 
 ```bash
-build/rhino_lab run examples/function_call.json --entry root --trace
+build/stt_vm run examples/function_call.json --entry root --trace
 ```
 
 ### dump
@@ -90,13 +90,13 @@ build/rhino_lab run examples/function_call.json --entry root --trace
 现在也会打印 CodeBlock 静态扩展字段，包括 `baseline`、`currline`、`instlnums`、`argnames`、`defaults`、`flags`、`inherits`、`annotations`、`syntactic`、`generics`。
 
 ```bash
-build/rhino_lab dump examples/minimal.json
+build/stt_vm dump examples/minimal.json
 ```
 
 查看资料风格的 ClassCodeBlock 静态字段：
 
 ```bash
-build/rhino_lab dump examples/codeblock_static_shape.json
+build/stt_vm dump examples/codeblock_static_shape.json
 ```
 
 ### disasm
@@ -104,15 +104,17 @@ build/rhino_lab dump examples/codeblock_static_shape.json
 当前和 `dump` 输出一致，重点展示每条指令的 oparg 解释。
 
 ```bash
-build/rhino_lab disasm examples/function_call.json
+build/stt_vm disasm examples/function_call.json
 ```
 
 ## 示例
 
+如果想用网页形式浏览完整说明，可以直接打开 [WEB_GUIDE.html](/Users/mueller25/Desktop/minivm/docs/WEB_GUIDE.html)。它把构建、运行、JSON 字段、指令写法和示例串成了一条从零开始的路径。
+
 ### 最小示例
 
 ```bash
-build/rhino_lab run examples/minimal.json --dump-tables --trace
+build/stt_vm run examples/minimal.json --dump-tables --trace
 ```
 
 当前 `examples/minimal.json` 表达的是：
@@ -136,7 +138,7 @@ BINARY_OP 3 ; NB_MULTIPLY
 ### 函数调用示例
 
 ```bash
-build/rhino_lab run examples/function_call.json --dump-tables --trace
+build/stt_vm run examples/function_call.json --dump-tables --trace
 ```
 
 这个示例覆盖：
@@ -147,16 +149,31 @@ build/rhino_lab run examples/function_call.json --dump-tables --trace
 - 子 frame 执行
 - `RETURN_VALUE` 返回到父 frame
 
+### 高级指令覆盖示例
+
+```bash
+build/stt_vm run examples/advanced_instructions.json --dump-tables --trace
+```
+
+这个示例覆盖：
+
+- `LOAD_NAMED_PARAM` / `BIND_NAMED_PARAM`
+- `EXTENDED_ARG` 展开调用参数
+- `LOAD_VARIABLE` / `STORE_VARIABLE` 的 `global:x` 作用域名字
+- `LOAD_MODULE` 模块属性持久化
+- class 直接 `CALL` 创建实例
+- 负索引、`SLICE`、`TYPE_CAST`
+
 ## Metadata JSON 基本结构
 
 当前没有源码 parser，正式输入是静态 CodeBlock JSON。如何把伪代码整理成 JSON、VM 如何执行，见 [LANGUAGE_VM_GUIDE.md](LANGUAGE_VM_GUIDE.md)。
 
 完整字段说明见 [METADATA_JSON.md](METADATA_JSON.md)。
 
-如果你是按资料截图里的 `type: 0`、`opcode/oparg`、`ECHO`、`LOAD_BUILTIN_FUN` 等风格写，可以看 [SOURCE_COMPAT.md](SOURCE_COMPAT.md)。项目里也有对应示例：
+如果你是按原始资料里的 `type: 0`、`opcode/oparg`、`ECHO`、`LOAD_BUILTIN_FUN` 等风格写，可以看 [SOURCE_COMPAT.md](SOURCE_COMPAT.md)。项目里也有对应示例：
 
 ```bash
-build/rhino_lab run examples/source_style.json --dump-tables --trace
+build/stt_vm run examples/source_style.json --dump-tables --trace
 ```
 
 ```json
@@ -214,30 +231,38 @@ locals: {b = int(2), a = int(1)}
 - `before stack` / `after stack`：栈式 VM 的核心状态变化。
 - `locals` / `globals`：变量环境变化。
 
-## 已实现的核心指令
+## 已实现指令速览
 
-第一版已实现：
+当前 registry 中的指令都已经接入 VM 执行分支。下面是常用和核心指令速览；每条指令的 `oparg` 类型、栈变化、训练版语义和边界见 [INSTRUCTION_SET.md](INSTRUCTION_SET.md)，原始资料 opcode 数值对照见 [SOURCE_COMPAT.md](SOURCE_COMPAT.md)。
 
 ```text
-LOAD_CONST LOAD_IMM8 LOAD_NONE
+LOAD_CONST LOAD_IMM8 LOAD_NONE OPCODE_NUM
 LOAD_NAME STORE_NAME
 LOAD_GLOBAL STORE_GLOBAL
 LOAD_VAR STORE_VAR LOAD_GVAR STORE_GVAR LOAD_TVAR STORE_TVAR LOAD_BVAR STORE_BVAR
 LOAD_ARG LOAD_BUILTIN_FUNC
+LOAD_CONST_VAR STORE_CONST_VAR LOAD_ENV_VAR STORE_ENV_VAR STORE_TYPE
+LOAD_VARIABLE STORE_VARIABLE UNLET_VARIABLE
 BINARY_OP UNARY_OP COMPARE_OP
-BUILD_LIST BUILD_DICT LOAD_SUBSCR STORE_SUBSCR
-POP_TOP ECHO TO_BOOL
+BUILD_LIST BUILD_DICT LOAD_SUBSCR STORE_SUBSCR UNLET_SUBSCR SLICE UNPACK_LIST UNPACK_DICT
+POP_TOP ECHO TO_BOOL TO_STRING TYPE_CAST
 JUMP_FORWARD JUMP_BACKWARD
 POP_JUMP_IF_FALSE POP_JUMP_IF_TRUE
 JUMP_IF_FALSE_OR_POP JUMP_IF_TRUE_OR_POP
 DEFINE_FUN DEFINE_FUNCTION DEFINE_GFUN DEFINE_TFUN DEFINE_PRELOADER DEFINE_CONSTRUCTOR DEFINE_LAMBDA DEFINE_CLOSURE DEFINE_ANONYMOUS
-CALL RETURN_VALUE
-DEFINE_CLASS CREATE_INSTANCE LOAD_ATTR STORE_ATTR
+LOAD_FUNCTION LOAD_LAMBDA MAKE_FUNCTION REPLACE_FUNCTION
+CALL TENNIS_CALL DEFER_CALL DEFER RETURN_VALUE YIELD_VALUE RETURN_GENERATOR
+LOAD_NAMED_PARAM BIND_NAMED_PARAM EXTENDED_ARG
+DEFINE_CLASS ALLOC_CLASS_TYPE CREATE_INSTANCE LOAD_CLASS_META LOAD_INHERIT STORE_INHERIT ADD_MEMORY_CLASS
+LOAD_ATTR STORE_ATTR UNLET_ATTR INSTANCE_OF INSTANCE_NOT
+LOAD_MODULE DEFINE_MODULE DECLARE_PACKAGE DECLARE_IMPORT SOURCE SOURCE_MODULE UNLOAD_MODULE GET_CALLER_MODULE
+LOAD_SCRIPT STORE_SCRIPT UNLET_SCRIPT GET_PATH_BY_FQN GET_FQN_BY_PATH SET_FQN UNSET_FQN EXECUTE EXEC_NETABLOCK
+DEFINE_ANNOTATION DEFINE_FLAW LOAD_FLAW THROW CATCH LOAD_NOTE LOAD_ANNOTATION
+BUILD_GENERICS BUILD_RECORD GENERICS_INSTANCE PARSE_MODULE_ATTRS
+ENTER_LOOP LEAVE_LOOP EXIT_SCOPE GARBAGE_COLLECT BREAK CONTINUE_LOOP SCRIPT_FINISH SLEEP MAKE_MUTABLE
 ```
 
-更详细的每条指令说明、栈变化和示例见 [INSTRUCTION_SET.md](INSTRUCTION_SET.md)。
-
-未实现的 opcode 会抛出带上下文的 `RuntimeError`，里面包含：
+未知或非法 opcode 会抛出带上下文的 `RuntimeError`，里面包含：
 
 - frame 名称
 - ip

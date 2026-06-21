@@ -4,7 +4,7 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace rhino {
+namespace stt {
 namespace {
 
 bool has(const Json& json, const std::string& key) {
@@ -311,4 +311,4 @@ ExceptionTableItem MetadataLoader::loadExceptionTableItem(const Json& json) cons
     return item;
 }
 
-} // namespace rhino
+} // namespace stt

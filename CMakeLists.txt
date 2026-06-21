@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(rhino_lab LANGUAGES CXX)
+project(stt_vm LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(rhino_lab
+add_executable(stt_vm
     src/main.cpp
     src/debug/Disassembler.cpp
     src/metadata/Loader.cpp
@@ -18,10 +18,10 @@ add_executable(rhino_lab
     src/vm/Value.cpp
 )
 
-target_include_directories(rhino_lab PRIVATE src)
+target_include_directories(stt_vm PRIVATE src)
 
 if(MSVC)
-    target_compile_options(rhino_lab PRIVATE /W4)
+    target_compile_options(stt_vm PRIVATE /W4)
 else()
-    target_compile_options(rhino_lab PRIVATE -Wall -Wextra -pedantic)
+    target_compile_options(stt_vm PRIVATE -Wall -Wextra -pedantic)
 endif()

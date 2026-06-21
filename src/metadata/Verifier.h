@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace rhino {
+namespace stt {
 
 class Verifier {
 public:
@@ -21,4 +21,4 @@ private:
     const OpcodeRegistry& registry_;
 };
 
-} // namespace rhino
+} // namespace stt

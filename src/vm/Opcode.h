@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace rhino {
+namespace stt {
 
 enum class OpargKind {
     None,
@@ -56,4 +56,4 @@ std::string binaryOpName(int value);
 std::string unaryOpName(int value);
 std::string compareOpName(int value);
 
-} // namespace rhino
+} // namespace stt

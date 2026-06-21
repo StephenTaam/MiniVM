@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace rhino {
+namespace stt {
 
 class JsonError : public std::runtime_error {
 public:
@@ -68,4 +68,4 @@ private:
     Object objectValue_;
 };
 
-} // namespace rhino
+} // namespace stt

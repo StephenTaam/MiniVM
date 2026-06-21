@@ -20,9 +20,9 @@ struct Options {
 
 void usage(std::ostream& out) {
     out << "Usage:\n"
-        << "  rhino_lab run <metadata.json> [--trace] [--dump-tables] [--entry name]\n"
-        << "  rhino_lab dump <metadata.json>\n"
-        << "  rhino_lab disasm <metadata.json>\n";
+        << "  stt_vm run <metadata.json> [--trace] [--dump-tables] [--entry name]\n"
+        << "  stt_vm dump <metadata.json>\n"
+        << "  stt_vm disasm <metadata.json>\n";
 }
 
 Options parseArgs(int argc, char** argv) {
@@ -60,11 +60,11 @@ int main(int argc, char** argv) {
     try {
         Options options = parseArgs(argc, argv);
 
-        rhino::OpcodeRegistry registry;
-        rhino::MetadataLoader loader(registry);
-        rhino::Program program = loader.loadFile(options.file);
+        stt::OpcodeRegistry registry;
+        stt::MetadataLoader loader(registry);
+        stt::Program program = loader.loadFile(options.file);
 
-        rhino::Verifier verifier(registry);
+        stt::Verifier verifier(registry);
         auto errors = verifier.verify(program);
         if (!errors.empty()) {
             std::cerr << "Metadata verification failed:\n";
@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        rhino::Disassembler disassembler(registry);
+        stt::Disassembler disassembler(registry);
 
         if (options.command == "dump" || options.command == "disasm") {
             disassembler.dumpProgram(program, std::cout);
@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
                 disassembler.dumpProgram(program, std::cout);
                 std::cout << "\n";
             }
-            rhino::VM vm(std::move(program), registry);
+            stt::VM vm(std::move(program), registry);
             vm.trace = options.trace;
             vm.dumpTables = options.dumpTables;
             (void)vm.run(options.entry);

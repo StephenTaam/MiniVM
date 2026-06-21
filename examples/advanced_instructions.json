@@ -1,0 +1,136 @@
+{
+  "version": 1,
+  "entry": "main",
+  "root": {
+    "type": 0,
+    "cbname": "main",
+    "constants": [
+      1,
+      2,
+      3,
+      99,
+      "HelloWorld",
+      0,
+      -1,
+      "string",
+      "advanced_done"
+    ],
+    "names": [
+      "sum3",
+      "c",
+      "args3",
+      "math.demo",
+      "answer",
+      "global:gx",
+      "Example",
+      "obj",
+      "tail",
+      "casted",
+      "len"
+    ],
+    "blocks": [
+      {
+        "type": 1,
+        "cbname": "sum3",
+        "constants": [],
+        "names": [],
+        "blocks": [],
+        "instructions": [
+          { "op": "LOAD_ARG", "arg": 0 },
+          { "op": "LOAD_ARG", "arg": 1 },
+          { "op": "BINARY_OP", "arg": 1 },
+          { "op": "LOAD_ARG", "arg": 2 },
+          { "op": "BINARY_OP", "arg": 1 },
+          { "op": "RETURN_VALUE", "arg": 0 }
+        ],
+        "exceptiontable": [],
+        "instlnums": [],
+        "baseline": 0,
+        "argnames": ["a", "b", "c"],
+        "defaults": []
+      },
+      {
+        "type": 2,
+        "cbname": "Example",
+        "constants": [],
+        "names": [],
+        "blocks": [],
+        "instructions": [],
+        "exceptiontable": [],
+        "instlnums": [],
+        "baseline": 0,
+        "inherits": [],
+        "annotations": [],
+        "syntactic": {},
+        "generics": []
+      }
+    ],
+    "instructions": [
+      { "op": "DEFINE_FUN", "arg": 0 },
+      { "op": "STORE_NAME", "arg": 0 },
+
+      { "op": "LOAD_NAME", "arg": 0 },
+      { "op": "LOAD_CONST", "arg": 0 },
+      { "op": "LOAD_CONST", "arg": 1 },
+      { "op": "LOAD_NAMED_PARAM", "arg": 1 },
+      { "op": "LOAD_CONST", "arg": 2 },
+      { "op": "BIND_NAMED_PARAM", "arg": 1 },
+      { "op": "CALL", "arg": 3 },
+      { "op": "ECHO", "arg": 0 },
+
+      { "op": "LOAD_NAME", "arg": 0 },
+      { "op": "LOAD_CONST", "arg": 0 },
+      { "op": "LOAD_CONST", "arg": 1 },
+      { "op": "LOAD_CONST", "arg": 2 },
+      { "op": "BUILD_LIST", "arg": 3 },
+      { "op": "EXTENDED_ARG", "arg": 0 },
+      { "op": "CALL", "arg": 1 },
+      { "op": "ECHO", "arg": 0 },
+
+      { "op": "LOAD_CONST", "arg": 3 },
+      { "op": "STORE_VARIABLE", "arg": 5 },
+      { "op": "LOAD_VARIABLE", "arg": 5 },
+      { "op": "ECHO", "arg": 0 },
+
+      { "op": "LOAD_MODULE", "arg": 3 },
+      { "op": "LOAD_CONST", "arg": 3 },
+      { "op": "STORE_ATTR", "arg": 4 },
+      { "op": "LOAD_MODULE", "arg": 3 },
+      { "op": "LOAD_ATTR", "arg": 4 },
+      { "op": "ECHO", "arg": 0 },
+
+      { "op": "DEFINE_CLASS", "arg": 1 },
+      { "op": "STORE_NAME", "arg": 6 },
+      { "op": "LOAD_NAME", "arg": 6 },
+      { "op": "CALL", "arg": 0 },
+      { "op": "ECHO", "arg": 0 },
+
+      { "op": "LOAD_CONST", "arg": 4 },
+      { "op": "LOAD_CONST", "arg": 6 },
+      { "op": "LOAD_SUBSCR", "arg": 0 },
+      { "op": "ECHO", "arg": 0 },
+
+      { "op": "LOAD_CONST", "arg": 4 },
+      { "op": "LOAD_CONST", "arg": 5 },
+      { "op": "LOAD_CONST", "arg": 6 },
+      { "op": "SLICE", "arg": 0 },
+      { "op": "ECHO", "arg": 0 },
+
+      { "op": "LOAD_CONST", "arg": 0 },
+      { "op": "LOAD_CONST", "arg": 7 },
+      { "op": "TYPE_CAST", "arg": 7 },
+      { "op": "STORE_NAME", "arg": 9 },
+      { "op": "LOAD_NAME", "arg": 9 },
+      { "op": "LOAD_ATTR", "arg": 10 },
+      { "op": "ECHO", "arg": 0 },
+
+      { "op": "LOAD_CONST", "arg": 8 },
+      { "op": "ECHO", "arg": 0 },
+      { "op": "RETURN_VALUE", "arg": 0 }
+    ],
+    "exceptiontable": [],
+    "instlnums": [],
+    "baseline": 0,
+    "currline": -1
+  }
+}

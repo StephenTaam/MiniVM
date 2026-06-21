@@ -7,7 +7,7 @@
 #include <iosfwd>
 #include <string>
 
-namespace rhino {
+namespace stt {
 
 struct OpargExplanation {
     OpargKind kind = OpargKind::Unknown;
@@ -32,4 +32,4 @@ private:
     const OpcodeRegistry& registry_;
 };
 
-} // namespace rhino
+} // namespace stt

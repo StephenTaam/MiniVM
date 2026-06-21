@@ -7,7 +7,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace rhino {
+namespace stt {
 
 struct Program {
     int version = 1;
@@ -17,4 +17,4 @@ struct Program {
     std::unordered_map<int, OpcodeSpec> opcodeSpecs;
 };
 
-} // namespace rhino
+} // namespace stt

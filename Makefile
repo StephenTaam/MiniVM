@@ -3,7 +3,7 @@ CXXFLAGS ?= -std=c++17 -Wall -Wextra -pedantic -O2
 CPPFLAGS ?= -Isrc
 
 BUILD_DIR := build
-TARGET := $(BUILD_DIR)/rhino_lab
+TARGET := $(BUILD_DIR)/stt_vm
 
 SOURCES := \
 	src/main.cpp \

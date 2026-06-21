@@ -7,7 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace rhino {
+namespace stt {
 namespace {
 
 std::string trimDouble(double value) {
@@ -107,6 +107,39 @@ Value Value::instance(std::shared_ptr<ClassValue> classValue) {
     return out;
 }
 
+Value Value::module(std::string name, std::unordered_map<std::string, Value> attrs) {
+    Value out;
+    out.type = ValueType::Module;
+    auto moduleValue = std::make_shared<ModuleValue>();
+    moduleValue->name = std::move(name);
+    moduleValue->attrs = std::move(attrs);
+    out.data = moduleValue;
+    return out;
+}
+
+Value Value::iterator(std::vector<Value> items) {
+    Value out;
+    out.type = ValueType::Iterator;
+    auto iteratorValue = std::make_shared<IteratorValue>();
+    iteratorValue->items = std::move(items);
+    out.data = iteratorValue;
+    return out;
+}
+
+Value Value::error(std::string name) {
+    return error(std::move(name), Value::null());
+}
+
+Value Value::error(std::string name, Value payload) {
+    Value out;
+    out.type = ValueType::Error;
+    auto errorValue = std::make_shared<ErrorValue>();
+    errorValue->name = std::move(name);
+    errorValue->payload = std::move(payload);
+    out.data = errorValue;
+    return out;
+}
+
 bool Value::isNumeric() const {
     return type == ValueType::Int || type == ValueType::Double;
 }
@@ -147,6 +180,10 @@ bool Value::truthy() const {
             return !std::get<std::shared_ptr<ListValue>>(data)->items.empty();
         case ValueType::Dict:
             return !std::get<std::shared_ptr<DictValue>>(data)->items.empty();
+        case ValueType::Iterator: {
+            auto iteratorValue = std::get<std::shared_ptr<IteratorValue>>(data);
+            return iteratorValue->index < iteratorValue->items.size();
+        }
         default:
             return true;
     }
@@ -209,6 +246,19 @@ std::string Value::toString() const {
                 : "<null>";
             return "<instance " + name + ">";
         }
+        case ValueType::Module:
+            return "<module " + std::get<std::shared_ptr<ModuleValue>>(data)->name + ">";
+        case ValueType::Iterator: {
+            const auto& iteratorValue = std::get<std::shared_ptr<IteratorValue>>(data);
+            return "<iterator " + std::to_string(iteratorValue->index) + "/" + std::to_string(iteratorValue->items.size()) + ">";
+        }
+        case ValueType::Error: {
+            const auto& errorValue = std::get<std::shared_ptr<ErrorValue>>(data);
+            if (errorValue->payload.type == ValueType::Null) {
+                return "<error " + errorValue->name + ">";
+            }
+            return "<error " + errorValue->name + ": " + errorValue->payload.repr() + ">";
+        }
         default:
             return "<" + valueTypeName(type) + ">";
     }
@@ -230,6 +280,12 @@ std::string Value::repr() const {
             return "list(" + toString() + ")";
         case ValueType::Dict:
             return "dict(" + toString() + ")";
+        case ValueType::Module:
+            return toString();
+        case ValueType::Iterator:
+            return toString();
+        case ValueType::Error:
+            return toString();
         default:
             return toString();
     }
@@ -301,6 +357,12 @@ bool valueEquals(const Value& left, const Value& right) {
             return std::get<std::shared_ptr<ClassValue>>(left.data) == std::get<std::shared_ptr<ClassValue>>(right.data);
         case ValueType::Instance:
             return std::get<std::shared_ptr<InstanceValue>>(left.data) == std::get<std::shared_ptr<InstanceValue>>(right.data);
+        case ValueType::Module:
+            return std::get<std::shared_ptr<ModuleValue>>(left.data) == std::get<std::shared_ptr<ModuleValue>>(right.data);
+        case ValueType::Iterator:
+            return std::get<std::shared_ptr<IteratorValue>>(left.data) == std::get<std::shared_ptr<IteratorValue>>(right.data);
+        case ValueType::Error:
+            return std::get<std::shared_ptr<ErrorValue>>(left.data) == std::get<std::shared_ptr<ErrorValue>>(right.data);
         default:
             return left.toString() == right.toString();
     }
@@ -332,4 +394,4 @@ int compareValues(const Value& left, const Value& right) {
     throw std::runtime_error("cannot compare " + left.repr() + " and " + right.repr());
 }
 
-} // namespace rhino
+} // namespace stt

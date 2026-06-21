@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace rhino {
+namespace stt {
 
 struct Instruction {
     int opcode = 0;
@@ -19,4 +19,4 @@ struct ExceptionTableItem {
     std::string type;
 };
 
-} // namespace rhino
+} // namespace stt

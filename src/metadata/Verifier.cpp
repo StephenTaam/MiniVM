@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-namespace rhino {
+namespace stt {
 namespace {
 
 bool inRange(int value, size_t size) {
@@ -99,4 +99,4 @@ void Verifier::verifyInstruction(const CodeBlock& block, const Instruction& inst
     }
 }
 
-} // namespace rhino
+} // namespace stt

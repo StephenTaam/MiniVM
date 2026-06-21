@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>STT Metadata VM 网页说明</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8f3;
+      --surface: #ffffff;
+      --surface-soft: #eef4f1;
+      --ink: #17201b;
+      --muted: #617069;
+      --line: #d5ddd8;
+      --accent: #0b6f66;
+      --accent-strong: #084f49;
+      --accent-soft: #dceeea;
+      --warn: #9b5b12;
+      --code-bg: #18211d;
+      --code-ink: #e9f2ed;
+      --mark: #f6e7b9;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 16px;
+      line-height: 1.68;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: var(--accent-strong);
+      text-decoration: underline;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      border-right: 1px solid var(--line);
+      background: #fbfcf8;
+      padding: 28px 20px;
+    }
+
+    .brand {
+      margin-bottom: 28px;
+    }
+
+    .brand strong {
+      display: block;
+      color: var(--ink);
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .toc a {
+      display: block;
+      border-left: 3px solid transparent;
+      padding: 7px 10px;
+      color: #31423b;
+      font-size: 14px;
+    }
+
+    .toc a:hover {
+      border-left-color: var(--accent);
+      background: var(--accent-soft);
+      text-decoration: none;
+    }
+
+    .content {
+      max-width: 1180px;
+      padding: 34px 44px 70px;
+    }
+
+    .hero {
+      padding-bottom: 26px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      max-width: 900px;
+      margin: 0;
+      color: var(--ink);
+      font-size: 36px;
+      line-height: 1.2;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 940px;
+      margin: 16px 0 0;
+      color: #33443d;
+      font-size: 18px;
+    }
+
+    .quickline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .quickline a,
+    .quickline span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      padding: 5px 10px;
+      color: #26362f;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .guide-section {
+      padding: 34px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .guide-section:last-child {
+      border-bottom: 0;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 26px;
+      line-height: 1.28;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 26px 0 10px;
+      font-size: 18px;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+
+    p {
+      max-width: 980px;
+      margin: 10px 0;
+    }
+
+    .note {
+      border-left: 4px solid var(--accent);
+      background: var(--surface-soft);
+      padding: 12px 14px;
+      color: #26362f;
+    }
+
+    .warn {
+      border-left-color: var(--warn);
+      background: #fbf3df;
+    }
+
+    .cols {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      padding: 18px;
+    }
+
+    .panel h3 {
+      margin-top: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 8px;
+      background: var(--surface);
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #e7eee9;
+      color: #1b2a24;
+      font-weight: 700;
+    }
+
+    code {
+      border: 1px solid #cbd5cf;
+      background: #eef3ef;
+      padding: 1px 5px;
+      color: #13241d;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    pre {
+      overflow-x: auto;
+      margin: 14px 0;
+      border: 1px solid #29362f;
+      background: var(--code-bg);
+      padding: 16px;
+      color: var(--code-ink);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    pre code {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      color: inherit;
+      font-size: inherit;
+    }
+
+    .steps {
+      counter-reset: steps;
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .step {
+      position: relative;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      padding: 14px 16px 14px 48px;
+    }
+
+    .step::before {
+      counter-increment: steps;
+      content: counter(steps);
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      width: 24px;
+      height: 24px;
+      border: 1px solid var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      text-align: center;
+      line-height: 22px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .mini {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status {
+      display: inline-block;
+      margin-right: 6px;
+      border: 1px solid #bdd6ce;
+      background: var(--accent-soft);
+      padding: 0 6px;
+      color: var(--accent-strong);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .tag {
+      display: inline-block;
+      margin: 2px 4px 2px 0;
+      border: 1px solid var(--line);
+      background: #f5f7f4;
+      padding: 1px 7px;
+      color: #33443d;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 920px) {
+      .shell {
+        display: block;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .toc {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 2px;
+      }
+
+      .content {
+        padding: 28px 18px 56px;
+      }
+
+      h1 {
+        font-size: 29px;
+      }
+
+      .cols {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="sidebar">
+      <div class="brand">
+        <strong>STT Metadata VM</strong>
+        <span>静态 CodeBlock JSON 与栈式 bytecode 的使用说明</span>
+      </div>
+      <div class="toc" role="navigation" aria-label="目录">
+        <a href="#overview">1. 这是什么</a>
+        <a href="#quickstart">2. 快速运行</a>
+        <a href="#model">3. 执行模型</a>
+        <a href="#json">4. JSON 字段</a>
+        <a href="#instruction-format">5. 指令格式</a>
+        <a href="#write-program">6. 怎么写程序</a>
+        <a href="#instruction-groups">7. 指令分类</a>
+        <a href="#examples">8. 示例文件</a>
+        <a href="#debug">9. 调试方法</a>
+        <a href="#boundary">10. 边界和兼容</a>
+      </div>
+    </div>
+
+    <div class="content" role="main">
+      <div class="hero">
+        <h1>STT Metadata VM 从零使用说明</h1>
+        <p class="lead">这个页面把项目的使用方式讲成一条完整路径：先编译运行，再理解 CodeBlock JSON 数据结构，最后按指令集写 metadata 程序并调试。</p>
+        <div class="quickline" aria-label="相关文档">
+          <a href="./USAGE.md">USAGE.md</a>
+          <a href="./LANGUAGE_VM_GUIDE.md">LANGUAGE_VM_GUIDE.md</a>
+          <a href="./METADATA_JSON.md">METADATA_JSON.md</a>
+          <a href="./INSTRUCTION_SET.md">INSTRUCTION_SET.md</a>
+          <a href="./SOURCE_COMPAT.md">SOURCE_COMPAT.md</a>
+          <span>当前输入：静态 JSON，不是 .ose 源码</span>
+        </div>
+      </div>
+
+      <div class="guide-section" id="overview">
+        <h2>1. 这是什么</h2>
+        <p>STT Metadata VM 是一个训练版 bytecode 虚拟机。它不直接解析 `.ose` 源码，也不读取二进制 RSE 文件；它读取一份静态 CodeBlock metadata JSON，然后执行里面的栈式指令。</p>
+        <pre><code>伪代码或外部编译器
+        ↓
+CodeBlock metadata JSON
+        ↓
+STT Metadata VM 执行</code></pre>
+        <p class="note">原始资料里最重要的约束是 CodeBlock 数据结构和指令名/opcode。本项目按原始资料保留 `type`、`cbname`、`constants`、`names`、`blocks`、`instructions`、`exceptiontable` 等字段；指令也按原始资料尽量对齐，宿主相关行为用训练版语义模拟。</p>
+      </div>
+
+      <div class="guide-section" id="quickstart">
+        <h2>2. 快速运行</h2>
+        <div class="cols">
+          <div class="panel">
+            <h3>macOS / Linux / WSL</h3>
+            <pre><code>make
+build/stt_vm run examples/minimal.json</code></pre>
+            <p>预期输出会看到 `6`，对应示例里的 `3 * 2`。</p>
+          </div>
+          <div class="panel">
+            <h3>Windows / 通用 CMake</h3>
+            <pre><code>cmake -S . -B build-cmake
+cmake --build build-cmake
+build-cmake\Debug\stt_vm.exe run examples\minimal.json</code></pre>
+            <p>Visual Studio 多配置构建下，Release 可执行文件通常在 `build-cmake\Release\stt_vm.exe`。</p>
+          </div>
+        </div>
+        <h3>命令格式</h3>
+        <pre><code>stt_vm run &lt;metadata.json&gt; [--trace] [--dump-tables] [--entry name]
+stt_vm dump &lt;metadata.json&gt;
+stt_vm disasm &lt;metadata.json&gt;</code></pre>
+        <table>
+          <thead>
+            <tr>
+              <th>命令</th>
+              <th>用途</th>
+              <th>常用场景</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>run</code></td>
+              <td>加载 JSON 并执行 VM。</td>
+              <td>确认程序能跑、观察输出。</td>
+            </tr>
+            <tr>
+              <td><code>dump</code></td>
+              <td>打印 Program、CodeBlock、常量表、名字表、子块、指令和扩展字段。</td>
+              <td>检查 JSON 静态结构有没有写对。</td>
+            </tr>
+            <tr>
+              <td><code>disasm</code></td>
+              <td>当前和 dump 输出接近，重点看每条指令的 oparg 解释。</td>
+              <td>确认 `arg` 查的是常量表、名字表还是子块表。</td>
+            </tr>
+            <tr>
+              <td><code>--trace</code></td>
+              <td>逐条指令打印栈、locals、globals 和查表结果。</td>
+              <td>调试栈式程序。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="guide-section" id="model">
+        <h2>3. 执行模型</h2>
+        <p>一个 JSON 程序由 `Program` 外壳和 `root` CodeBlock 组成。CodeBlock 里最重要的是四张表：常量表、名字表、子块表和指令表。</p>
+        <pre><code>Program
+  version
+  entry
+  root: CodeBlock
+
+CodeBlock
+  constants       字面量和静态值
+  names           变量名、函数名、属性名
+  blocks          函数、类、Neta 等子 CodeBlock
+  instructions    栈式指令序列</code></pre>
+        <p>VM 是栈式执行。大多数指令从栈顶取值，再把结果压回栈。文档里用右侧表示栈顶：</p>
+        <pre><code>LOAD_CONST 0
+before: [...]
+after:  [..., constants[0]]
+
+BINARY_OP 1
+before: [..., left, right]
+after:  [..., left + right]</code></pre>
+      </div>
+
+      <div class="guide-section" id="json">
+        <h2>4. JSON 字段</h2>
+        <h3>Program 外壳</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>字段</th>
+              <th>类型</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>version</code></td>
+              <td>number</td>
+              <td>metadata 版本号，当前示例使用 `1`。</td>
+            </tr>
+            <tr>
+              <td><code>entry</code></td>
+              <td>string</td>
+              <td>默认入口名。`run --entry name` 可以覆盖。</td>
+            </tr>
+            <tr>
+              <td><code>root</code></td>
+              <td>object</td>
+              <td>顶层 CodeBlock。没有源码 parser 时，这是 VM 的主要输入。</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>CodeBlock 类型</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>type</th>
+              <th>资料类名</th>
+              <th>用途</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>0</code></td>
+              <td>CodeBlock / Script</td>
+              <td>顶层脚本块。</td>
+            </tr>
+            <tr>
+              <td><code>1</code></td>
+              <td>FuncCodeBlock</td>
+              <td>函数块，使用 `argnames`、`defaults`、`flags` 等函数字段。</td>
+            </tr>
+            <tr>
+              <td><code>2</code></td>
+              <td>ClassCodeBlock</td>
+              <td>类块，使用 `inherits`、`syntactic`、`generics` 等类字段。</td>
+            </tr>
+            <tr>
+              <td><code>4</code></td>
+              <td>NetaCodeBlock</td>
+              <td>Neta 块，当前用训练版执行语义。</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>CodeBlock 字段总表</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>字段</th>
+              <th>类型</th>
+              <th>怎么用</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>type</code></td>
+              <td>number</td>
+              <td>块类型，规范写法是 `0/1/2/4`。字符串 type 只作为兼容写法。</td>
+            </tr>
+            <tr>
+              <td><code>cbname</code></td>
+              <td>string</td>
+              <td>块名称，用于 trace frame 名、函数名、类名、模块名等展示。</td>
+            </tr>
+            <tr>
+              <td><code>constants</code></td>
+              <td>array</td>
+              <td>常量池，`LOAD_CONST arg` 读取 `constants[arg]`。</td>
+            </tr>
+            <tr>
+              <td><code>names</code> / <code>name</code></td>
+              <td>array&lt;string&gt;</td>
+              <td>名字表，变量名、函数名、属性名和作用域名字都放这里。`name` 是兼容别名。</td>
+            </tr>
+            <tr>
+              <td><code>blocks</code></td>
+              <td>array&lt;CodeBlock&gt;</td>
+              <td>嵌套子块。`DEFINE_FUN 0`、`DEFINE_CLASS 0` 这类指令会读取 `blocks[arg]`。</td>
+            </tr>
+            <tr>
+              <td><code>instructions</code></td>
+              <td>array</td>
+              <td>指令序列。推荐写 object 数组，例如 `{ "op": "LOAD_CONST", "arg": 0 }`。</td>
+            </tr>
+            <tr>
+              <td><code>exceptiontable</code></td>
+              <td>array</td>
+              <td>异常处理表。`THROW` 会按 `startIp/endIp/handlerIp` 查 handler，`CATCH` 取 pending error。</td>
+            </tr>
+            <tr>
+              <td><code>instlnums</code></td>
+              <td>array&lt;number&gt;</td>
+              <td>每条指令对应源码行号，可为空。用于 dump/trace 辅助定位。</td>
+            </tr>
+            <tr>
+              <td><code>baseline</code></td>
+              <td>number</td>
+              <td>起始行号偏移，可为空或 `0`。</td>
+            </tr>
+            <tr>
+              <td><code>currline</code></td>
+              <td>number</td>
+              <td>训练版保留字段，资料核心表没有；当前保存并 dump。</td>
+            </tr>
+            <tr>
+              <td><code>argnames</code></td>
+              <td>array&lt;string&gt;</td>
+              <td>函数参数名，只对 FuncCodeBlock 有意义。</td>
+            </tr>
+            <tr>
+              <td><code>defaults</code></td>
+              <td>array&lt;Value&gt;</td>
+              <td>函数参数默认值。</td>
+            </tr>
+            <tr>
+              <td><code>flags</code></td>
+              <td>array&lt;string&gt;</td>
+              <td>函数类型标记，例如资料里出现的 `dict`。</td>
+            </tr>
+            <tr>
+              <td><code>inherits</code></td>
+              <td>array&lt;string&gt;</td>
+              <td>类继承列表，只对 ClassCodeBlock 有意义。</td>
+            </tr>
+            <tr>
+              <td><code>annotations</code></td>
+              <td>array</td>
+              <td>注解列表。当前保留并可通过注解相关指令构造 metadata。</td>
+            </tr>
+            <tr>
+              <td><code>syntactic</code></td>
+              <td>object 或空数组</td>
+              <td>类扩展特性列表。资料表写 Dict；loader 兼容 `{}` 和 `[]`。</td>
+            </tr>
+            <tr>
+              <td><code>generics</code></td>
+              <td>array&lt;string&gt;</td>
+              <td>泛型参数名或泛型列表。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="guide-section" id="instruction-format">
+        <h2>5. 指令格式</h2>
+        <p>推荐使用字符串 `op`，因为调试时可读性最好：</p>
+        <pre><code>{ "op": "LOAD_CONST", "arg": 0 }</code></pre>
+        <p>也支持资料里的数字 opcode 和 `oparg` 字段：</p>
+        <pre><code>{ "opcode": 25, "oparg": 0 }</code></pre>
+        <p>`25` 是十进制，对应资料里的 `0x19 LOAD_CONST`。JSON 标准不支持 `0x19` 这种字面量，所以文件里写十进制。</p>
+
+        <h3>oparg 怎么解释</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>类型</th>
+              <th>含义</th>
+              <th>例子</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ConstIndex</code></td>
+              <td>查 `constants[arg]`。</td>
+              <td><code>LOAD_CONST 0</code></td>
+            </tr>
+            <tr>
+              <td><code>NameIndex</code></td>
+              <td>查 `names[arg]`。</td>
+              <td><code>LOAD_NAME 2</code></td>
+            </tr>
+            <tr>
+              <td><code>BlockIndex</code></td>
+              <td>查 `blocks[arg]`。</td>
+              <td><code>DEFINE_FUN 0</code></td>
+            </tr>
+            <tr>
+              <td><code>ArgCount</code></td>
+              <td>调用参数数量。</td>
+              <td><code>CALL 2</code></td>
+            </tr>
+            <tr>
+              <td><code>BinaryOp</code> / <code>UnaryOp</code> / <code>CompareOp</code></td>
+              <td>操作符枚举。</td>
+              <td><code>BINARY_OP 1</code> 表示加法。</td>
+            </tr>
+            <tr>
+              <td><code>JumpTarget</code> / <code>JumpOffset</code></td>
+              <td>跳转目标或偏移。也可以额外写 `target` 字段。</td>
+              <td><code>{ "op": "POP_JUMP_IF_FALSE", "target": 10 }</code></td>
+            </tr>
+            <tr>
+              <td><code>ImmInt</code></td>
+              <td>立即数整数。</td>
+              <td><code>LOAD_IMM8 7</code></td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="note">调试时加 `--trace`，VM 会打印 `oparg kind`、查表位置、查表结果、栈变化和 locals/globals。看懂 trace，基本就能自己排查大多数 JSON 指令错误。</p>
+      </div>
+
+      <div class="guide-section" id="write-program">
+        <h2>6. 怎么写程序</h2>
+        <div class="steps">
+          <div class="step">
+            <strong>先写静态表。</strong>
+            <p>字面量放 `constants`，变量名/函数名/属性名放 `names`，函数或类子块放 `blocks`。</p>
+          </div>
+          <div class="step">
+            <strong>再写栈式指令。</strong>
+            <p>想赋值就先把值压栈再 `STORE_NAME`；想计算就先压两个值再 `BINARY_OP`；想调用函数就先压函数、再压参数、最后 `CALL 参数个数`。</p>
+          </div>
+          <div class="step">
+            <strong>最后用 dump 和 trace 验证。</strong>
+            <p>先 `dump` 看 `arg` 有没有查对表，再 `run --trace` 看每一步的栈是否符合预期。</p>
+          </div>
+        </div>
+
+        <h3>最小例子：a = 3; b = 2; echo a * b</h3>
+        <pre><code>{
+  "version": 1,
+  "entry": "main",
+  "root": {
+    "type": 1,
+    "cbname": "main",
+    "constants": [
+      { "type": "int", "value": 3 },
+      { "type": "int", "value": 2 }
+    ],
+    "names": ["a", "b", "c"],
+    "blocks": [],
+    "instructions": [
+      { "op": "LOAD_CONST", "arg": 0 },
+      { "op": "STORE_NAME", "arg": 0 },
+      { "op": "LOAD_CONST", "arg": 1 },
+      { "op": "STORE_NAME", "arg": 1 },
+      { "op": "LOAD_NAME", "arg": 0 },
+      { "op": "LOAD_NAME", "arg": 1 },
+      { "op": "BINARY_OP", "arg": 3 },
+      { "op": "STORE_NAME", "arg": 2 },
+      { "op": "LOAD_NAME", "arg": 2 },
+      { "op": "ECHO", "arg": 0 },
+      { "op": "RETURN_VALUE", "arg": 0 }
+    ],
+    "exceptiontable": [],
+    "instlnums": [],
+    "baseline": 0
+  }
+}</code></pre>
+        <pre><code>build/stt_vm run examples/minimal.json --dump-tables --trace</code></pre>
+      </div>
+
+      <div class="guide-section" id="instruction-groups">
+        <h2>7. 指令分类</h2>
+        <p>当前 registry 中的指令都已经接入执行分支。下面按用途分组，方便快速定位；完整逐条解释看 <a href="./INSTRUCTION_SET.md">INSTRUCTION_SET.md</a>，资料 opcode 数值看 <a href="./SOURCE_COMPAT.md">SOURCE_COMPAT.md</a>。</p>
+        <table>
+          <thead>
+            <tr>
+              <th>分组</th>
+              <th>代表指令</th>
+              <th>语义说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>常量和值</td>
+              <td><span class="tag">LOAD_CONST</span><span class="tag">LOAD_IMM8</span><span class="tag">LOAD_NONE</span><span class="tag">OPCODE_NUM</span></td>
+              <td>压入常量、立即数、空值或 opcode 数量。</td>
+            </tr>
+            <tr>
+              <td>变量和作用域</td>
+              <td><span class="tag">LOAD_NAME</span><span class="tag">STORE_NAME</span><span class="tag">LOAD_GLOBAL</span><span class="tag">STORE_VARIABLE</span><span class="tag">UNLET_VARIABLE</span></td>
+              <td>维护 locals、globals、const/env/type 变量和带作用域名字。</td>
+            </tr>
+            <tr>
+              <td>函数和调用</td>
+              <td><span class="tag">DEFINE_FUN</span><span class="tag">LOAD_FUNCTION</span><span class="tag">CALL</span><span class="tag">EXTENDED_ARG</span><span class="tag">RETURN_VALUE</span></td>
+              <td>从 `blocks` 创建函数，支持普通参数、命名参数、展开参数、defer 和 tennis call。</td>
+            </tr>
+            <tr>
+              <td>算术和比较</td>
+              <td><span class="tag">BINARY_OP</span><span class="tag">UNARY_OP</span><span class="tag">COMPARE_OP</span><span class="tag">TO_BOOL</span><span class="tag">TYPE_CAST</span></td>
+              <td>执行数值、字符串、bool 和比较操作。未知枚举会报清晰错误。</td>
+            </tr>
+            <tr>
+              <td>容器</td>
+              <td><span class="tag">BUILD_LIST</span><span class="tag">BUILD_DICT</span><span class="tag">LOAD_SUBSCR</span><span class="tag">STORE_SUBSCR</span><span class="tag">SLICE</span></td>
+              <td>构造 list/dict，支持索引、负索引、切片、解包和删除下标。</td>
+            </tr>
+            <tr>
+              <td>跳转和循环</td>
+              <td><span class="tag">JUMP_FORWARD</span><span class="tag">POP_JUMP_IF_FALSE</span><span class="tag">FOR_ITER</span><span class="tag">BREAK</span><span class="tag">CONTINUE_LOOP</span></td>
+              <td>支持目标 ip、相对偏移和 iterator 循环。</td>
+            </tr>
+            <tr>
+              <td>类和对象</td>
+              <td><span class="tag">DEFINE_CLASS</span><span class="tag">CREATE_INSTANCE</span><span class="tag">LOAD_ATTR</span><span class="tag">STORE_ATTR</span><span class="tag">INSTANCE_OF</span></td>
+              <td>创建训练版 class/instance，读写属性，模拟继承和实例判断。</td>
+            </tr>
+            <tr>
+              <td>模块、脚本和 FQN</td>
+              <td><span class="tag">DECLARE_PACKAGE</span><span class="tag">LOAD_MODULE</span><span class="tag">SOURCE</span><span class="tag">SET_FQN</span><span class="tag">GET_PATH_BY_FQN</span></td>
+              <td>维护本地模块表、脚本表、包名、路径映射。不会执行真实系统 shell。</td>
+            </tr>
+            <tr>
+              <td>异常、注解、泛型</td>
+              <td><span class="tag">THROW</span><span class="tag">CATCH</span><span class="tag">DEFINE_ANNOTATION</span><span class="tag">BUILD_GENERICS</span><span class="tag">GENERICS_INSTANCE</span></td>
+              <td>异常使用 `Error` 值和 `exceptiontable` 训练版跳转；注解、泛型、record 返回 metadata 对象。</td>
+            </tr>
+            <tr>
+              <td>编译器书签</td>
+              <td><span class="tag">ENTER_LOOP</span><span class="tag">LEAVE_LOOP</span><span class="tag">EXIT_SCOPE</span><span class="tag">GARBAGE_COLLECT</span></td>
+              <td>作为 no-op/bookkeeping 处理，用来保留资料里的编译器结构信息。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="guide-section" id="examples">
+        <h2>8. 示例文件</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>文件</th>
+              <th>看什么</th>
+              <th>运行命令</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>examples/minimal.json</code></td>
+              <td>常量、变量、乘法、echo。</td>
+              <td><code>build/stt_vm run examples/minimal.json --trace</code></td>
+            </tr>
+            <tr>
+              <td><code>examples/function_call.json</code></td>
+              <td>函数块、参数、调用和返回。</td>
+              <td><code>build/stt_vm run examples/function_call.json --trace</code></td>
+            </tr>
+            <tr>
+              <td><code>examples/source_style.json</code></td>
+              <td>资料风格数字 `type`、`opcode`、`oparg`。</td>
+              <td><code>build/stt_vm run examples/source_style.json --dump-tables</code></td>
+            </tr>
+            <tr>
+              <td><code>examples/codeblock_static_shape.json</code></td>
+              <td>CodeBlock / Func / Class / Neta 的静态字段形状。</td>
+              <td><code>build/stt_vm dump examples/codeblock_static_shape.json</code></td>
+            </tr>
+            <tr>
+              <td><code>examples/instruction_coverage.json</code></td>
+              <td>基础指令覆盖和 trace 观察。</td>
+              <td><code>build/stt_vm run examples/instruction_coverage.json --dump-tables</code></td>
+            </tr>
+            <tr>
+              <td><code>examples/advanced_instructions.json</code></td>
+              <td>命名参数、展开参数、模块属性、class call、切片和类型转换。</td>
+              <td><code>build/stt_vm run examples/advanced_instructions.json --dump-tables</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="guide-section" id="debug">
+        <h2>9. 调试方法</h2>
+        <p>推荐顺序是：先静态检查，再跑 trace，再根据错误上下文修 JSON。</p>
+        <div class="steps">
+          <div class="step">
+            <strong>先看结构。</strong>
+            <pre><code>build/stt_vm dump examples/your_file.json</code></pre>
+          </div>
+          <div class="step">
+            <strong>再看执行。</strong>
+            <pre><code>build/stt_vm run examples/your_file.json --dump-tables --trace</code></pre>
+          </div>
+          <div class="step">
+            <strong>最后看错误上下文。</strong>
+            <p>RuntimeError 会带 frame、ip、instruction、oparg kind、lookup、stack before/current、locals 和 globals。大多数错误都能从这里定位到是哪条指令的 `arg` 查错表、栈上少值或变量名不存在。</p>
+          </div>
+        </div>
+        <p class="warn note">如果 `LOAD_CONST 0` 报错，先看 `constants` 是否为空；如果 `STORE_NAME 2` 报错，先看 `names[2]` 是否存在；如果 `CALL 2` 报错，先看栈上是不是按“函数、参数1、参数2”的顺序准备好了。</p>
+      </div>
+
+      <div class="guide-section" id="boundary">
+        <h2>10. 边界和兼容</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>能力</th>
+              <th>状态</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>CodeBlock 数据结构</td>
+              <td><span class="status">已对齐</span></td>
+              <td>使用资料里的 `0/1/2/4` 类型和静态字段。字符串 type 只是兼容。</td>
+            </tr>
+            <tr>
+              <td>资料 opcode</td>
+              <td><span class="status">已注册</span><span class="status">已执行</span></td>
+              <td>原始资料中可识别 opcode 已登记数值；registry 内指令都有 VM 分支。</td>
+            </tr>
+            <tr>
+              <td>宿主相关指令</td>
+              <td><span class="status">训练语义</span></td>
+              <td>`SOURCE`、`EXECUTE`、模块、FQN、注解、泛型等使用本地 metadata 语义，不执行真实 Harmony/Neta 宿主副作用。</td>
+            </tr>
+            <tr>
+              <td>.ose 源码 parser</td>
+              <td>未包含</td>
+              <td>当前要手写 JSON，或者未来由外部编译器生成同样的 JSON。</td>
+            </tr>
+            <tr>
+              <td>二进制 RSE</td>
+              <td>未包含</td>
+              <td>当前不读写 RSE，只读 JSON。</td>
+            </tr>
+            <tr>
+              <td>未知 opcode</td>
+              <td>执行时报错</td>
+              <td>dump/disasm 可以看到结构；真正执行未知或 `OPCODE_ILL` 会报 RuntimeError。</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="mini">最后更新目标：让一个没有看过源码的人，也能按这个页面完成构建、运行、改 JSON、查字段、查指令和调试。</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

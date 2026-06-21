@@ -1,8 +1,8 @@
-# Rhino Lab 指令集参考
+# STT Metadata VM 指令集参考
 
 这份文档描述当前训练 VM 支持的 metadata 指令格式、`oparg` 解释规则、栈变化和执行语义。
 
-如果想从“怎么写一个 JSON 程序”开始看，先读 [LANGUAGE_VM_GUIDE.md](LANGUAGE_VM_GUIDE.md)。如果想对照用户资料截图里的 opcode 数值，读 [SOURCE_COMPAT.md](SOURCE_COMPAT.md)。
+如果想从“怎么写一个 JSON 程序”开始看，先读 [LANGUAGE_VM_GUIDE.md](LANGUAGE_VM_GUIDE.md)。如果想对照原始资料里的 opcode 数值，读 [SOURCE_COMPAT.md](SOURCE_COMPAT.md)。
 
 ## 基本模型
 
@@ -68,7 +68,7 @@ after:  [..., constants[0]]
 | `CompareOp` | `compareop_t` 枚举值 | `COMPARE_OP 3` |
 | `ArgCount` | 调用参数数量 | `CALL 2` |
 | `ImmInt` | 立即数整数 | `LOAD_IMM8 7` |
-| `Unknown` | 已注册但未定义解释方式 | 未实现 opcode |
+| `Unknown` | 外部未知或未来扩展 opcode，当前 registry 内正常指令不应出现 | 执行未知 opcode 会报错 |
 
 `arg` 也可以写成资料风格字段名 `oparg`：
 
@@ -186,8 +186,9 @@ push(value)
 
 ```text
 1. 当前 frame.locals
-2. VM.globals
-3. VM.builtins
+2. 当前 frame.constVars / envVars / typeVars / scripts
+3. VM.globals / constGlobals / envGlobals / typeGlobals / scripts / modules
+4. VM.builtins
 ```
 
 找不到会报：
@@ -310,6 +311,44 @@ LOAD_GVAR  -> vm.globals[name]
 STORE_GVAR -> vm.globals[name] = pop()
 ```
 
+### LOAD_VARIABLE / STORE_VARIABLE
+
+```text
+LOAD_VARIABLE arg
+STORE_VARIABLE arg
+oparg kind: NameIndex
+```
+
+资料表里描述为 “load/store variable with scope”。训练 VM 约定 `names[arg]` 可以写普通名字，也可以写显式作用域名字：
+
+| 写法 | 表 |
+| --- | --- |
+| `x` | 默认当前 `frame.locals`，读取时也会继续查全局表 |
+| `local:x` / `name:x` / `l:x` | 当前 `frame.locals` |
+| `global:x` / `span:x` / `g:x` | `vm.globals` |
+| `const:x` / `c:x` | `frame.constVars` 和 `vm.constGlobals` |
+| `env:x` / `e:x` | `frame.envVars` 和 `vm.envGlobals` |
+| `type:x` | `frame.typeVars` 和 `vm.typeGlobals` |
+| `script:x` / `s:x` | `frame.scripts` 和 `vm.scripts` |
+| `module:x` / `m:x` | VM 模块表，读取时会创建/返回同名模块 |
+
+示例：
+
+```json
+{
+  "constants": [99],
+  "names": ["global:gx"],
+  "instructions": [
+    { "op": "LOAD_CONST", "arg": 0 },
+    { "op": "STORE_VARIABLE", "arg": 0 },
+    { "op": "LOAD_VARIABLE", "arg": 0 },
+    { "op": "ECHO", "arg": 0 }
+  ]
+}
+```
+
+会输出 `99`。
+
 ### LOAD_TVAR / STORE_TVAR
 
 ```text
@@ -318,7 +357,7 @@ STORE_TVAR arg
 oparg kind: NameIndex
 ```
 
-训练版用 `frame.tvars` 模拟 Rhino/Phoenix 的 `t:` 作用域：
+训练版用 `frame.tvars` 模拟 原始运行时 的 `t:` 作用域：
 
 ```text
 LOAD_TVAR  -> frame.tvars[name]
@@ -437,11 +476,12 @@ before: [..., func, arg1, arg2, ..., argN]
 
 ```text
 1. 弹出 N 个参数
-2. 弹出函数对象
-3. 创建新 Frame
-4. 把参数绑定到 function_codeblock.argnames
-5. 执行函数 CodeBlock
-6. 把返回值压回调用者栈
+2. 展开 EXTENDED_ARG，并收集 BIND_NAMED_PARAM 生成的命名参数
+3. 弹出函数对象 / 内置函数 / class 对象
+4. 函数调用时创建新 Frame
+5. 把位置参数、命名参数和默认值绑定到 function_codeblock.argnames
+6. 执行函数 CodeBlock
+7. 把返回值压回调用者栈
 ```
 
 栈变化：
@@ -466,6 +506,70 @@ after:  [..., retval]
 
 ```text
 add(constants[0], constants[1])
+```
+
+`CALL` 也支持 class 对象。对 `DEFINE_CLASS` 产生的 class 执行 `CALL 0` 会创建一个实例并压栈，相当于 `CREATE_INSTANCE` 的简写。
+
+### LOAD_NAMED_PARAM / BIND_NAMED_PARAM
+
+```text
+LOAD_NAMED_PARAM arg
+BIND_NAMED_PARAM arg
+oparg kind: NameIndex
+```
+
+命名参数由两步组成：
+
+```text
+LOAD_NAMED_PARAM c   -> push(named_param_marker("c"))
+LOAD_CONST 3         -> push(3)
+BIND_NAMED_PARAM c   -> pop value 和 marker，push named_param("c", 3)
+```
+
+之后 `CALL` 会把 `named_param` 从普通位置参数中分离出来，并按 `argnames` 绑定：
+
+```text
+[..., fn, 1, 2, named_param("c", 3)]
+CALL 3
+```
+
+等价于：
+
+```text
+fn(1, 2, c=3)
+```
+
+### EXTENDED_ARG
+
+```text
+EXTENDED_ARG
+oparg kind: None
+```
+
+训练 VM 把栈顶值包装成 `extended_arg`。`CALL` 收到它时：
+
+```text
+list  -> 展开成多个位置参数
+dict  -> 展开成多个命名参数
+其他值 -> 当作一个位置参数
+```
+
+示例：
+
+```text
+LOAD_NAME sum3
+LOAD_CONST 1
+LOAD_CONST 2
+LOAD_CONST 3
+BUILD_LIST 3
+EXTENDED_ARG
+CALL 1
+```
+
+等价于：
+
+```text
+sum3(1, 2, 3)
 ```
 
 ### RETURN_VALUE
@@ -494,7 +598,7 @@ LOAD_BUILTIN_FUNC arg
 oparg kind: NameIndex
 ```
 
-资料截图里也出现 `LOAD_BUILTIN_FUN`，当前 loader 会归一化成 `LOAD_BUILTIN_FUNC`。
+原始资料里也出现 `LOAD_BUILTIN_FUN`，当前 loader 会归一化成 `LOAD_BUILTIN_FUNC`。
 
 语义：
 
@@ -517,19 +621,18 @@ push(builtins[name])
 
 ## 资料指令别名
 
-资料截图里有一些旧名或别名，当前 loader 会自动归一化：
+原始资料里有一些旧名或别名，当前 loader 会自动归一化：
 
 | 资料/旧名 | 当前规范名 | 执行状态 |
 | --- | --- | --- |
-| `RHINO_ECHO` | `ECHO` | 已实现，旧名兼容 |
 | `LOAD_BUILTIN_FUN` | `LOAD_BUILTIN_FUNC` | 已实现 |
-| `LOAD_FUN_VARG` | `LOAD_FUNC_VARG` | 已注册，未实现 |
+| `LOAD_FUN_VARG` | `LOAD_FUNC_VARG` | 已实现，返回当前函数从 `arg` 开始的变长参数 list |
 | `LOAD_SPAN` | `LOAD_GLOBAL` | 已实现为 global/builtin 查找 |
 | `STORE_SPAN` | `STORE_GLOBAL` | 已实现为 globals 写入 |
-| `STORE_CODEBLOCK` | `STORE_SCRIPT` | 已注册，未实现 |
+| `STORE_CODEBLOCK` | `STORE_SCRIPT` | 已实现，把栈顶或 `blocks[arg]` 存入脚本表 |
 | `CONVERT_BOOL` | `TO_BOOL` | 已实现 |
-| `DEFINE_NOTE` | `DEFINE_ANNOTATION` | 已注册，未实现 |
-| `UNLET_SPAN` | `UNLET_GLOBAL` | 已注册，未实现 |
+| `DEFINE_NOTE` | `DEFINE_ANNOTATION` | 已实现为注解元数据对象 |
+| `UNLET_SPAN` | `UNLET_GLOBAL` | 已实现为删除 global |
 
 ## 算术和逻辑
 
@@ -564,25 +667,21 @@ after:  [..., result]
 | `3` | `NB_MULTIPLY` | 乘法 |
 | `4` | `NB_DEVIDE` | 除法 |
 | `5` | `NB_MOD` | 取模 |
+| `6` | `NB_AND` | 整数按位与 |
 | `7` | `NB_AND2` | 逻辑与 |
+| `8` | `NB_OR` | 整数按位或 |
 | `9` | `NB_OR2` | 逻辑或 |
+| `10` | `NB_XOR` | 整数按位异或 |
+| `11` | `NB_XOR2` | 逻辑异或 |
+| `12` | `NB_LSHIFT` | 整数左移 |
+| `13` | `NB_RSHIFT` | 整数右移 |
+| `14` | `NB_AND3` | 训练版按整数按位与处理 |
+| `15` | `NB_OR3` | 训练版按整数按位或处理 |
+| `16` | `NB_XOR3` | 训练版按整数按位异或处理 |
+| `17` | `NB_LSHIFT3` | 训练版按整数左移处理 |
+| `18` | `NB_RSHIFT3` | 训练版按整数右移处理 |
 
-已登记但未实现的常见值：
-
-| arg | 名称 |
-| --- | --- |
-| `0` | `NB_UNKNOWN` |
-| `6` | `NB_AND` |
-| `8` | `NB_OR` |
-| `10` | `NB_XOR` |
-| `11` | `NB_XOR2` |
-| `12` | `NB_LSHIFT` |
-| `13` | `NB_RSHIFT` |
-| `14` | `NB_AND3` |
-| `15` | `NB_OR3` |
-| `16` | `NB_XOR3` |
-| `17` | `NB_LSHIFT3` |
-| `18` | `NB_RSHIFT3` |
+`0 / NB_UNKNOWN` 保持非法子操作，执行会报错。
 
 示例：
 
@@ -620,15 +719,11 @@ push(unary(value, arg))
 | --- | --- | --- |
 | `1` | `UOP_PLUS` | 正号 |
 | `2` | `UOP_MINUS` | 负号 |
+| `3` | `UOP_TILDE` | 整数按位取反 |
 | `4` | `UOP_NOT` | 逻辑非 |
+| `5` | `UOP_TILDE3` | 训练版按整数按位取反处理 |
 
-已登记但未实现：
-
-| arg | 名称 |
-| --- | --- |
-| `0` | `UOP_UNKNOWN` |
-| `3` | `UOP_TILDE` |
-| `5` | `UOP_TILDE3` |
+`0 / UOP_UNKNOWN` 保持非法子操作，执行会报错。
 
 ## 比较
 
@@ -657,16 +752,12 @@ push(compare(left, right, arg))
 | `4` | `CMP_NE` | `!=` |
 | `5` | `CMP_GT` | `>` |
 | `6` | `CMP_GE` | `>=` |
+| `7` | `CMP_PM` | pattern match：训练版用 `right` 作为正则/子串匹配 `left` |
+| `8` | `CMP_RDM` | reverse pattern match：训练版用 `left` 作为正则/子串匹配 `right` |
 | `9` | `CMP_IS` | 训练版按相等比较处理 |
 | `10` | `CMP_ISNOT` | 训练版按不相等比较处理 |
 
-已登记但未实现：
-
-| arg | 名称 |
-| --- | --- |
-| `0` | `CMP_UNKNOWN` |
-| `7` | `CMP_PM` |
-| `8` | `CMP_RDM` |
+`0 / CMP_UNKNOWN` 保持非法子操作，执行会报错。
 
 示例：
 
@@ -759,6 +850,8 @@ dict[key]
 string[index]
 ```
 
+`list` 和 `string` 支持负索引，例如 `-1` 表示最后一个元素。
+
 ### STORE_SUBSCR
 
 ```text
@@ -781,6 +874,33 @@ container[index] = value
 list[index] = value
 dict[key] = value
 ```
+
+`list[index] = value` 支持负索引。
+
+### SLICE
+
+```text
+SLICE
+oparg kind: None
+```
+
+语义：
+
+```text
+end = pop()
+start = pop()
+container = pop()
+push(container[start:end])
+```
+
+支持：
+
+```text
+list[start:end]
+string[start:end]
+```
+
+`start` / `end` 支持负数，并会被裁剪到容器边界。切片右边界不包含。
 
 ## 跳转和条件
 
@@ -995,7 +1115,16 @@ obj = pop()
 push(obj.attrs[name])
 ```
 
-实例属性查不到时，会尝试查 class 属性。
+支持：
+
+```text
+instance.attrs[name]
+class.attrs[name]
+module.attrs[name]
+dict[name]
+```
+
+实例属性查不到时，会尝试查 class 属性。`list`、`dict`、`string`、`iterator` 还支持只读属性 `len` / `length` / `size`；`function`、`builtin`、`class`、`module` 支持 `name`；`error` 支持 `name` 和 `payload`。
 
 ### STORE_ATTR
 
@@ -1013,11 +1142,76 @@ obj = pop()
 obj.attrs[name] = value
 ```
 
-## 已注册但未实现的 opcode
+支持写入 `instance`、`class`、`module` 和 `dict`。
 
-VM 注册了需求文档中的大部分 Rhino/Phoenix opcode 名称，方便 loader 和 disassembler 识别。
+### UNLET_ATTR
 
-如果执行到未实现 opcode，会报：
+```text
+UNLET_ATTR arg
+oparg kind: NameIndex
+```
+
+删除 `instance`、`class`、`module` 或 `dict` 上的属性/键。
+
+## 模块、脚本和类型转换
+
+### LOAD_MODULE / DEFINE_MODULE
+
+```text
+LOAD_MODULE arg
+DEFINE_MODULE arg
+oparg kind: NameIndex
+```
+
+`LOAD_MODULE` 按 `names[arg]` 或当前 `SET_FQN` 名称取模块。模块对象会缓存在 VM 模块表里，所以同名 `LOAD_MODULE` 会返回同一个模块，之前 `STORE_ATTR` 写进去的属性仍然存在。
+
+`DEFINE_MODULE` 从栈顶取模块名；如果栈为空，则使用 `names[arg]` 或当前 frame 名称作为模块名，然后返回同名模块对象。
+
+### LOAD_SCRIPT / STORE_SCRIPT / SOURCE
+
+`STORE_SCRIPT` 把栈顶值保存到脚本表；如果栈为空且 `arg` 指向 `blocks[arg]`，会保存该子 CodeBlock 的函数值。
+
+`LOAD_SCRIPT` 读取脚本表；如果没有保存过同名脚本，但存在同名 CodeBlock，则返回该 CodeBlock 的函数值；否则返回脚本名字符串。
+
+`SOURCE` 不执行系统 shell。它会优先查找同名 CodeBlock 并执行；找不到时创建/返回同名模块对象，并记录到已加载模块表。
+
+### TYPE_CAST
+
+```text
+TYPE_CAST arg
+oparg kind: ConstIndex
+```
+
+支持两种写法：
+
+```text
+value, "int", TYPE_CAST      -> int(value)
+value, TYPE_CAST arg         -> 优先用 constants[arg] 指定目标类型；如果 constants 越界再尝试 names[arg]
+```
+
+当前目标类型：
+
+| 名称 | 结果 |
+| --- | --- |
+| `1` / `int` / `Int` | 整数 |
+| `2` / `double` / `float` / `number` | 浮点数 |
+| `3` / `string` / `String` | 字符串 |
+| `4` / `bool` / `Bool` / `boolean` | 布尔值 |
+
+## 原始资料中未明确的训练版语义
+
+VM 已经为当前 registry 中的 opcode 都接了执行分支。少数指令依赖原始宿主环境或源码编译器上下文，训练版用可调试的本地语义代替：
+
+| 类型 | 指令示例 | 当前语义 |
+| --- | --- | --- |
+| 宿主环境 | `EXECUTE`、`SOURCE`、`SOURCE_MODULE` | 不真正执行系统命令；返回元数据对象或加载本 VM 内 CodeBlock |
+| 模块/FQN | `DECLARE_PACKAGE`、`DECLARE_IMPORT`、`SET_FQN`、`GET_PATH_BY_FQN` | 维护 frame/global 中的 package、module、路径映射信息 |
+| 注解/泛型/记录 | `DEFINE_ANNOTATION`、`LOAD_NOTE`、`BUILD_GENERICS`、`BUILD_RECORD` | 返回 dict 形式的元数据对象 |
+| 异常/Flaw | `DEFINE_FLAW`、`LOAD_FLAW`、`THROW`、`CATCH` | 用 VM 内部 `Error` 值模拟；有 `exceptiontable` 时跳 handler |
+| 编译器书签 | `ENTER_LOOP`、`LEAVE_LOOP`、`EXIT_SCOPE`、`GARBAGE_COLLECT` | 作为 no-op/bookkeeping 指令处理 |
+| 调用参数扩展 | `EXTENDED_ARG`、`LOAD_NAMED_PARAM`、`BIND_NAMED_PARAM` | 参与 `CALL` 的位置参数展开和命名参数绑定 |
+
+如果执行到未知 opcode 或 `OPCODE_ILL`，会报：
 
 ```text
 RuntimeError:
@@ -1030,10 +1224,8 @@ RuntimeError:
   stack before: ...
   stack current: ...
   locals: ...
-  reason: opcode not implemented: XXX
+  reason: illegal opcode / unknown opcode
 ```
-
-这类指令可以反汇编，但不能执行。
 
 ## 常见写法
 
@@ -1118,7 +1310,7 @@ examples/function_call.json
 写 metadata 时建议一直带上：
 
 ```bash
-build/rhino_lab run your.json --dump-tables --trace
+build/stt_vm run your.json --dump-tables --trace
 ```
 
 重点看：

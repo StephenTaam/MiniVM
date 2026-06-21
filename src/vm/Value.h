@@ -8,7 +8,7 @@
 #include <variant>
 #include <vector>
 
-namespace rhino {
+namespace stt {
 
 struct CodeBlock;
 struct ListValue;
@@ -17,6 +17,9 @@ struct FunctionValue;
 struct BuiltinValue;
 struct ClassValue;
 struct InstanceValue;
+struct ModuleValue;
+struct IteratorValue;
+struct ErrorValue;
 
 enum class ValueType {
     Null,
@@ -47,7 +50,10 @@ struct Value {
         std::shared_ptr<FunctionValue>,
         std::shared_ptr<BuiltinValue>,
         std::shared_ptr<ClassValue>,
-        std::shared_ptr<InstanceValue>>;
+        std::shared_ptr<InstanceValue>,
+        std::shared_ptr<ModuleValue>,
+        std::shared_ptr<IteratorValue>,
+        std::shared_ptr<ErrorValue>>;
 
     ValueType type = ValueType::Null;
     Storage data;
@@ -65,6 +71,10 @@ struct Value {
     static Value builtin(std::string name, std::function<Value(const std::vector<Value>&)> fn);
     static Value classType(std::shared_ptr<CodeBlock> codeblock);
     static Value instance(std::shared_ptr<ClassValue> classValue);
+    static Value module(std::string name, std::unordered_map<std::string, Value> attrs = {});
+    static Value iterator(std::vector<Value> items);
+    static Value error(std::string name);
+    static Value error(std::string name, Value payload);
 
     bool isNumeric() const;
     double asDouble() const;
@@ -102,8 +112,23 @@ struct InstanceValue {
     std::unordered_map<std::string, Value> attrs;
 };
 
+struct ModuleValue {
+    std::string name;
+    std::unordered_map<std::string, Value> attrs;
+};
+
+struct IteratorValue {
+    std::vector<Value> items;
+    size_t index = 0;
+};
+
+struct ErrorValue {
+    std::string name;
+    Value payload;
+};
+
 std::string valueTypeName(ValueType type);
 bool valueEquals(const Value& left, const Value& right);
 int compareValues(const Value& left, const Value& right);
 
-} // namespace rhino
+} // namespace stt

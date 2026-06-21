@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-namespace rhino {
+namespace stt {
 
 OpcodeRegistry::OpcodeRegistry() {
     const std::vector<std::pair<int, std::string>> sourceOpcodes = {
@@ -118,7 +118,6 @@ OpcodeRegistry::OpcodeRegistry() {
         addWithId(name, syntheticOpcode++);
     }
 
-    addAlias("RHINO_ECHO", "ECHO");
     addAlias("DEFINE_NOTE", "DEFINE_ANNOTATION");
     addAlias("LOAD_BUILTIN_FUN", "LOAD_BUILTIN_FUNC");
     addAlias("LOAD_FUN_VARG", "LOAD_FUNC_VARG");
@@ -178,6 +177,110 @@ OpcodeRegistry::OpcodeRegistry() {
     setKind("POP_JUMP_IF_TRUE", OpargKind::JumpTarget, 1, 0, "pop and jump if true");
     setKind("JUMP_IF_FALSE_OR_POP", OpargKind::JumpTarget, 1, 0, "jump if false, else pop");
     setKind("JUMP_IF_TRUE_OR_POP", OpargKind::JumpTarget, 1, 0, "jump if true, else pop");
+
+    setKind("LOAD_CONST_VAR", OpargKind::NameIndex, 0, 1, "load const variable by name");
+    setKind("LOAD_GLOBAL_CONST", OpargKind::NameIndex, 0, 1, "load global const variable by name");
+    setKind("STORE_CONST_VAR", OpargKind::NameIndex, 1, 0, "store const variable by name");
+    setKind("STORE_NAME_CONST", OpargKind::NameIndex, 1, 0, "store const local by name");
+    setKind("STORE_GLOBAL_CONST", OpargKind::NameIndex, 1, 0, "store global const variable by name");
+    setKind("LOAD_ENV_VAR", OpargKind::NameIndex, 0, 1, "load environment variable by name");
+    setKind("STORE_ENV_VAR", OpargKind::NameIndex, 1, 0, "store environment variable by name");
+    setKind("LOAD_VARIABLE", OpargKind::NameIndex, 0, 1, "load variable by scoped name");
+    setKind("LOAD_MICRO_VARIABLE", OpargKind::NameIndex, 0, 1, "load variable by scoped name");
+    setKind("STORE_VARIABLE", OpargKind::NameIndex, 1, 0, "store variable by scoped name");
+    setKind("STORE_VARIABLE_CONST", OpargKind::NameIndex, 1, 0, "store const variable by scoped name");
+    setKind("UNLET_VARIABLE", OpargKind::NameIndex, 0, 0, "delete variable by scoped name");
+    setKind("STORE_TYPE", OpargKind::NameIndex, 1, 0, "store type variable by name");
+
+    setKind("LOAD_FUNCTION", OpargKind::BlockIndex, 0, 1, "load function from blocks[oparg]");
+    setKind("REPLACE_FUNCTION", OpargKind::BlockIndex, 0, 1, "replace/load function from blocks[oparg]");
+    setKind("LOAD_LAMBDA", OpargKind::BlockIndex, 0, 1, "load lambda from blocks[oparg]");
+    setKind("MAKE_FUNCTION", OpargKind::BlockIndex, 0, 1, "make function from blocks[oparg]");
+    setKind("LOAD_FUNC_VARG", OpargKind::ImmInt, 0, 1, "load varargs starting at argument index");
+    setKind("ALLOC_CLASS_TYPE", OpargKind::BlockIndex, 0, 1, "allocate class type from blocks[oparg]");
+    setKind("LOAD_CLASS_META", OpargKind::None, 1, 1, "load class metadata");
+    setKind("LOAD_INHERIT", OpargKind::ImmInt, 0, 1, "load inherited class name by index");
+    setKind("STORE_INHERIT", OpargKind::NameIndex, 1, 0, "store inherited class/type binding");
+    setKind("ADD_MEMORY_CLASS", OpargKind::NameIndex, 1, 0, "store memory class/type binding");
+
+    setKind("LOAD_MODULE", OpargKind::NameIndex, 0, 1, "load module by name");
+    setKind("DEFINE_MODULE", OpargKind::NameIndex, -1, 1, "define or load module by name");
+    setKind("DECLARE_IMPORT", OpargKind::NameIndex, -1, 0, "declare imported module");
+    setKind("SOURCE_MODULE", OpargKind::NameIndex, -1, 0, "source/import module");
+    setKind("UNLOAD_MODULE", OpargKind::NameIndex, -1, 0, "unload module by name");
+    setKind("DECLARE_PACKAGE", OpargKind::ConstIndex, -1, 0, "declare package name");
+    setKind("LOAD_SCRIPT", OpargKind::NameIndex, 0, 1, "load script by name");
+    setKind("STORE_SCRIPT", OpargKind::NameIndex, -1, 0, "store script/codeblock by name");
+    setKind("STORE_SCRIPT_CONST", OpargKind::NameIndex, -1, 0, "store const script/codeblock by name");
+    setKind("UNLET_SCRIPT", OpargKind::NameIndex, 0, 0, "delete script by name");
+    setKind("LOAD_SCRIPT_ID", OpargKind::None, 0, 1, "load current script id");
+    setKind("LOAD_SENSE_PARSER", OpargKind::NameIndex, 0, 1, "load sense parser metadata");
+    setKind("LOAD_GADGET_FUNC", OpargKind::NameIndex, 0, 1, "load gadget/builtin function by name");
+    setKind("LOAD_IMPLICIT_VARIABLE", OpargKind::NameIndex, 0, 1, "load implicit variable by name");
+
+    setKind("LOAD_NAMED_PARAM", OpargKind::NameIndex, 0, 1, "load named parameter marker");
+    setKind("LOAD_NAMED_PARAM_CONST", OpargKind::NameIndex, 0, 1, "load const named parameter marker");
+    setKind("BIND_NAMED_PARAM", OpargKind::NameIndex, 2, 1, "bind top value to named parameter");
+    setKind("EXTENDED_ARG", OpargKind::None, -1, 1, "wrap top value as call argument extension");
+    setKind("TENNIS_CALL", OpargKind::ArgCount, -1, 1, "call function with tennis-call syntax");
+    setKind("DEFER_CALL", OpargKind::ArgCount, -1, 1, "create deferred call metadata");
+    setKind("DEFER", OpargKind::ArgCount, -1, 1, "create deferred call metadata");
+
+    setKind("UNLET_ATTR", OpargKind::NameIndex, 1, 0, "delete object attribute");
+    setKind("UNLET_GLOBAL", OpargKind::NameIndex, 0, 0, "delete global variable");
+    setKind("UNLET_NAME", OpargKind::NameIndex, 0, 0, "delete local variable");
+    setKind("UNLET_CONST_VAR", OpargKind::NameIndex, 0, 0, "delete const variable");
+    setKind("UNLET_SUBSCR", OpargKind::None, 2, 0, "delete container subscript");
+    setKind("UNPACK_LIST", OpargKind::ImmInt, 1, -1, "unpack list/iterator into stack values");
+    setKind("POP_UNPACK", OpargKind::ImmInt, 1, -1, "unpack list/iterator into stack values");
+    setKind("UNPACK_DICT", OpargKind::ImmInt, 1, -1, "unpack dict into key/value stack values");
+    setKind("SLICE", OpargKind::None, 3, 1, "slice list/string");
+
+    setKind("FOR_ITER", OpargKind::JumpTarget, 1, -1, "iterate or jump when iterator is exhausted");
+    setKind("BREAK", OpargKind::JumpTarget, 0, 0, "break to jump target");
+    setKind("CONTINUE_LOOP", OpargKind::JumpTarget, 0, 0, "continue to jump target");
+    setKind("GET_ITER", OpargKind::None, 1, 1, "create iterator");
+    setKind("TO_STRING", OpargKind::None, 1, 1, "convert to string");
+    setKind("TO_PREDICATE", OpargKind::None, 1, 1, "convert to predicate bool");
+    setKind("TYPE_CAST", OpargKind::ConstIndex, 1, 1, "cast value to target type");
+
+    setKind("THROW", OpargKind::NameIndex, -1, 0, "throw flaw/error");
+    setKind("CATCH", OpargKind::None, 0, 1, "push pending flaw/error");
+    setKind("DEFINE_FLAW", OpargKind::NameIndex, -1, 1, "define flaw/error value");
+    setKind("LOAD_FLAW", OpargKind::NameIndex, 0, 1, "load pending or named flaw/error");
+    setKind("DEFINE_ANNOTATION", OpargKind::None, -1, 1, "define annotation metadata");
+    setKind("LOAD_NOTE", OpargKind::NameIndex, -1, 1, "load note/annotation metadata");
+    setKind("LOAD_ANNOTATION", OpargKind::NameIndex, -1, 1, "load annotation metadata");
+    setKind("PARSE_MODULE_ATTRS", OpargKind::None, -1, 1, "parse module attribute metadata");
+    setKind("EXEC_NETABLOCK", OpargKind::BlockIndex, -1, 1, "execute neta block");
+    setKind("BUILD_GENERICS", OpargKind::ImmInt, -1, 1, "build generics metadata");
+    setKind("BUILD_RECORD", OpargKind::ImmInt, -1, 1, "build record metadata");
+    setKind("GENERICS_INSTANCE", OpargKind::None, 2, 1, "bind generic arguments to value");
+
+    setKind("SET_FQN", OpargKind::NameIndex, -1, 0, "set scoped fully-qualified name");
+    setKind("UNSET_FQN", OpargKind::None, 0, 0, "clear scoped fully-qualified name");
+    setKind("GET_PATH_BY_FQN", OpargKind::NameIndex, -1, 1, "convert fqn to path");
+    setKind("GET_FQN_BY_PATH", OpargKind::None, -1, 1, "convert path to fqn");
+    setKind("GET_CALLER_MODULE", OpargKind::None, 0, 1, "load caller module");
+    setKind("EXECUTE", OpargKind::None, -1, 1, "create execute-command metadata");
+    setKind("SOURCE", OpargKind::NameIndex, -1, 1, "source script or module");
+    setKind("SLEEP", OpargKind::ImmInt, 0, 0, "sleep for milliseconds");
+
+    setKind("YIELD_VALUE", OpargKind::None, -1, 1, "yield top value");
+    setKind("RETURN_GENERATOR", OpargKind::None, 0, 0, "return generator iterator");
+    setKind("SCRIPT_FINISH", OpargKind::None, 0, 0, "finish script frame");
+    setKind("INSTANCE_OF", OpargKind::None, 2, 1, "instance-of check");
+    setKind("INSTANCE_NOT", OpargKind::None, 2, 1, "negative instance-of check");
+    setKind("MAKE_MUTABLE", OpargKind::None, 1, 1, "mark value mutable");
+    setKind("CLASS_STATIC_ANNOTATION", OpargKind::None, -1, 0, "store class static annotation");
+    setKind("FUNC_STATIC_ANNOTATION", OpargKind::None, -1, 0, "store function static annotation");
+    setKind("ENTER_LOOP", OpargKind::None, 0, 0, "loop bookkeeping marker");
+    setKind("LEAVE_LOOP", OpargKind::None, 0, 0, "loop bookkeeping marker");
+    setKind("EXIT_SCOPE", OpargKind::None, 0, 0, "scope bookkeeping marker");
+    setKind("GARBAGE_COLLECT", OpargKind::None, 0, 0, "garbage collection marker");
+    setKind("POP_LOAD", OpargKind::NameIndex, 1, 1, "pop top then load name");
+    setKind("OPCODE_NUM", OpargKind::None, 0, 1, "push opcode count");
+    setKind("OPCODE_ILL", OpargKind::None, 0, 0, "illegal opcode");
 }
 
 void OpcodeRegistry::add(const std::string& name, OpargKind kind, int numpop, int numpush, const std::string& description) {
@@ -318,4 +421,4 @@ std::string compareOpName(int value) {
     }
 }
 
-} // namespace rhino
+} // namespace stt

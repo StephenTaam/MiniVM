@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <sstream>
 
-namespace rhino {
+namespace stt {
 namespace {
 
 class Parser {
@@ -367,4 +367,4 @@ Json Json::parseFile(const std::string& path) {
     return parse(buffer.str());
 }
 
-} // namespace rhino
+} // namespace stt

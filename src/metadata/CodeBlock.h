@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace rhino {
+namespace stt {
 
 enum class CodeBlockType {
     Normal = 0,
@@ -48,4 +48,4 @@ std::string codeBlockTypeName(CodeBlockType type);
 int codeBlockTypeId(CodeBlockType type);
 CodeBlockType parseCodeBlockType(const std::string& text);
 
-} // namespace rhino
+} // namespace stt
